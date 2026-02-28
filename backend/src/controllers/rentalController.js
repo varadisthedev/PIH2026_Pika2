@@ -73,18 +73,26 @@ export const getMyRentals = async (req, res) => {
 export const getSellerRentals = async (req, res) => {
     try {
         const sellerId = req.dbUser._id;
-        console.log(`🏪 [rentalController] GET /rentals/seller for seller: ${sellerId}`);
+        console.log(`🏪 [rentalController] GET /rentals/seller | seller MongoDB _id: ${sellerId}`);
 
-        // Find all products owned by this seller, then all rentals for those products
-        const sellerProducts = await Product.find({ owner: sellerId }).select('_id');
+        const sellerProducts = await Product.find({ owner: sellerId }).select('_id title');
         const productIds = sellerProducts.map(p => p._id);
+
+        console.log(`🏪 [rentalController] Seller owns ${sellerProducts.length} product(s):`,
+            sellerProducts.map(p => `${p._id} — ${p.title}`)
+        );
+
+        if (productIds.length === 0) {
+            console.log('🏪 [rentalController] No products found for this seller. Returning empty.');
+            return res.status(200).json({ rentals: [] });
+        }
 
         const rentals = await Rental.find({ product: { $in: productIds } })
             .populate('product', 'title category pricePerDay images')
             .populate('renter', 'name email')
             .sort({ createdAt: -1 });
 
-        console.log(`✅ [rentalController] Seller ${sellerId} has ${rentals.length} incoming requests`);
+        console.log(`✅ [rentalController] Found ${rentals.length} rental request(s) for seller ${sellerId}`);
         res.status(200).json({ rentals });
     } catch (error) {
         console.error('❌ [rentalController] getSellerRentals error:', error.message);

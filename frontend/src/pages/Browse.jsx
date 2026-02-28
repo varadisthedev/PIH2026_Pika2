@@ -1,35 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-    Search, SlidersHorizontal, X, ChevronDown, MapPin, Star, ShieldCheck,
-    ArrowUpDown, Filter, Map as MapIcon, Grid, LayoutGrid, List, Sliders, Settings2, ChevronRight
+    Search, SlidersHorizontal, X, MapPin, Navigation,
+    ArrowUpDown, LayoutGrid, List, Map as MapIcon,
 } from 'lucide-react';
 import api from '../api/axios.js';
 import { CATEGORIES } from '../api/placeholder.js';
+import { useLocation } from '../context/LocationContext.jsx';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { LoadingGrid, EmptyState, ErrorState } from '../components/items/ItemStates.jsx';
 import Container from '../components/layout/Container.jsx';
 import Button from '../components/ui/Button.jsx';
 import Badge from '../components/ui/Badge.jsx';
 
+const MapView = lazy(() => import('../components/MapView.jsx'));
+
+
 export default function Browse() {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    // Use global location context instead of local geolocation call
+    const { coords, locationName, status: locStatus, setShowModal } = useLocation();
 
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-    const [userCoords, setUserCoords] = useState(null); // { lat, lng }
+    const [showMap, setShowMap] = useState(false);
 
     // Filter States
     const [search, setSearch] = useState(searchParams.get('search') || '');
     const [category, setCategory] = useState(searchParams.get('category') || 'All');
     const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
-    const [maxDistance, setMaxDistance] = useState(searchParams.get('distance') || 25);
-    const [minRating, setMinRating] = useState(0);
-    const [verifiedOnly, setVerifiedOnly] = useState(false);
+    const [radiusKm, setRadiusKm] = useState(6000); // 6000km default = entire subcontinent
     const [sortBy, setSortBy] = useState('nearest');
+
 
     // Auto-detect user location once
     useEffect(() => {
@@ -53,33 +58,36 @@ export default function Browse() {
             if (search) params.search = search;
             if (category !== 'All') params.category = category;
             if (maxPrice) params.maxPrice = Number(maxPrice);
-            if (userCoords) {
-                params.userLat = userCoords.lat;
-                params.userLng = userCoords.lng;
+            if (coords) {
+                params.userLat = coords.lat;
+                params.userLng = coords.lng;
             }
 
             console.log('🔍 [Browse] Fetching products with filters:', params);
             const res = await api.get('/products', { params });
-            const fetchedItems = res.data.products || [];
-            console.log(`✅ [Browse] Loaded ${fetchedItems.length} products from backend`);
+            let fetchedItems = res.data.products || [];
+            console.log(`✅ [Browse] Loaded ${fetchedItems.length} products`);
 
-            // Client-side simulated filters for those not handled by backend yet
-            let results = [...fetchedItems];
-            if (minRating > 0) results = results.filter(i => i.rating >= minRating);
-            if (verifiedOnly) results = results.filter(i => i.isVerified !== false); // Backend uses isVerified or similar?
+            // Client-side radius filter (only when user has location + radius < 6000)
+            if (coords && radiusKm < 6000) {
+                fetchedItems = fetchedItems.filter(i =>
+                    i.distanceKm == null || i.distanceKm <= radiusKm
+                );
+                console.log(`📍 [Browse] After ${radiusKm}km radius filter: ${fetchedItems.length} items`);
+            }
 
-            // Sorting (if not already handled by backend proximity)
-            if (sortBy === 'price_low') results.sort((a, b) => a.pricePerDay - b.pricePerDay);
-            if (sortBy === 'rating_high') results.sort((a, b) => b.rating - a.rating);
+            if (sortBy === 'price_low') fetchedItems.sort((a, b) => a.pricePerDay - b.pricePerDay);
+            if (sortBy === 'price_high') fetchedItems.sort((a, b) => b.pricePerDay - a.pricePerDay);
 
-            setItems(results);
+            setItems(fetchedItems);
         } catch (e) {
             console.error('❌ [Browse] Failed to fetch products:', e);
             setError('Could not load items. Please try again.');
         } finally {
             setLoading(false);
         }
-    }, [search, category, maxPrice, userCoords, minRating, verifiedOnly, sortBy]);
+    }, [search, category, maxPrice, coords, radiusKm, sortBy]);
+
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -88,28 +96,24 @@ export default function Browse() {
             if (search) params.search = search;
             if (category !== 'All') params.category = category;
             if (maxPrice) params.maxPrice = maxPrice;
-            if (maxDistance !== 25) params.distance = maxDistance;
             setSearchParams(params, { replace: true });
         }, 350);
         return () => clearTimeout(handler);
-    }, [loadItems, search, category, maxPrice, maxDistance, setSearchParams]);
+    }, [loadItems, search, category, maxPrice, setSearchParams]);
+
 
     const clearFilters = () => {
         setSearch('');
         setCategory('All');
         setMaxPrice('');
-        setMaxDistance(25);
-        setMinRating(0);
-        setVerifiedOnly(false);
+        setRadiusKm(6000);
     };
 
     const countActiveFilters = () => {
         let count = 0;
         if (category !== 'All') count++;
         if (maxPrice) count++;
-        if (maxDistance !== 25) count++;
-        if (minRating > 0) count++;
-        if (verifiedOnly) count++;
+        if (radiusKm < 6000) count++;
         return count;
     };
 
@@ -196,50 +200,55 @@ export default function Browse() {
                                             }`}
                                     >
                                         {cat}
-                                        <ChevronRight size={14} className={`group-hover:translate-x-1 transition-transform ${category === cat ? 'opacity-100' : 'opacity-0'}`} />
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Distance Slider */}
-                        <div className="space-y-8 glass-card !p-8 !rounded-[2.5rem] bg-brand-teal/[0.02] border-brand-teal/5">
+                        {/* Radius Slider */}
+                        <div className="space-y-4 glass-card !p-6 !rounded-3xl">
                             <div className="flex justify-between items-center">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/40">Proximity</label>
-                                <span className="text-xs font-black text-brand-dark dark:text-brand-frost uppercase">{maxDistance}km</span>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/60">Search Radius</label>
+                                <span className="text-xs font-black text-brand-dark dark:text-brand-frost">
+                                    {radiusKm >= 6000 ? 'All India' : `${radiusKm.toLocaleString()} km`}
+                                </span>
                             </div>
                             <input
-                                type="range"
-                                min="1"
-                                max="50"
-                                value={maxDistance}
-                                onChange={e => setMaxDistance(Number(e.target.value))}
+                                type="range" min="1" max="6000" step="50"
+                                value={radiusKm}
+                                onChange={e => setRadiusKm(Number(e.target.value))}
                                 className="w-full h-1.5 bg-brand-teal/10 rounded-lg appearance-none cursor-pointer accent-brand-green"
                             />
                             <div className="flex justify-between text-[8px] font-black text-brand-teal/30 uppercase tracking-widest">
-                                <span>1km Radius</span>
-                                <span>50km Radius</span>
+                                <span>1 km</span>
+                                <span>All India (6000 km)</span>
                             </div>
                         </div>
 
-                        {/* Verified Toggle */}
-                        <button
-                            onClick={() => setVerifiedOnly(!verifiedOnly)}
-                            className={`flex items-center justify-between p-6 rounded-[2rem] glass-card transition-all group ${verifiedOnly ? 'bg-brand-green/10 border-brand-green/40 shadow-inner' : 'hover:bg-brand-teal/5'}`}
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className={`p-3 rounded-2xl shadow-xl transition-all ${verifiedOnly ? 'bg-brand-green text-brand-dark rotate-12' : 'bg-brand-teal/10 text-brand-teal'}`}>
-                                    <ShieldCheck size={20} />
-                                </div>
-                                <div className="text-left">
-                                    <div className="text-[11px] font-black text-brand-dark dark:text-brand-frost leading-none mb-1 uppercase tracking-tight">Verified Only</div>
-                                    <div className="text-[9px] font-bold text-brand-teal/40 uppercase tracking-widest">Trusted Hosts</div>
-                                </div>
+                        {/* Location status */}
+                        {locStatus === 'granted' && coords ? (
+                            <div className="flex items-center gap-2 text-xs font-semibold text-brand-teal dark:text-brand-green">
+                                <MapPin size={13} /> {locationName || `${coords.lat.toFixed(2)}°N, ${coords.lng.toFixed(2)}°E`}
                             </div>
-                            <div className={`w-10 h-5 rounded-full transition-colors relative flex items-center px-1 ${verifiedOnly ? 'bg-brand-green' : 'bg-brand-teal/20'}`}>
-                                <div className={`w-3 h-3 rounded-sm bg-white shadow-md transition-all ${verifiedOnly ? 'translate-x-[20px]' : 'translate-x-0'}`} />
-                            </div>
-                        </button>
+                        ) : (
+                            <button onClick={() => setShowModal(true)}
+                                className="flex items-center gap-2 text-xs font-bold text-[#73ab84] hover:text-brand-teal dark:text-[#79c7c5] transition-colors">
+                                <Navigation size={13} /> Enable location for nearby results
+                            </button>
+                        )}
+
+                        {/* Mini map preview */}
+                        {coords && (
+                            <Suspense fallback={<div className="h-40 rounded-2xl bg-[#99d19c]/10 animate-pulse" />}>
+                                <MapView
+                                    lat={coords.lat} lng={coords.lng}
+                                    title="Your location"
+                                    height="180px"
+                                    zoom={radiusKm < 50 ? 12 : radiusKm < 500 ? 9 : radiusKm < 2000 ? 6 : 4}
+                                    radiusKm={radiusKm < 6000 ? radiusKm : null}
+                                />
+                            </Suspense>
+                        )}
                     </aside>
 
                     {/* Main Content Area */}

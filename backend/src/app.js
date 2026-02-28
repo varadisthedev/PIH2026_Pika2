@@ -44,7 +44,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── STATIC: serve uploaded images ────────────────────────────────────────
-const uploadsDir = path.resolve(__dirname, '../../uploads');
+// __dirname = backend/src  →  ../uploads = backend/uploads (where multer saves files)
+const uploadsDir = path.resolve(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsDir));
 console.log('📁 [app] Serving uploads from:', uploadsDir);
 

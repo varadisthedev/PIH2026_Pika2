@@ -146,16 +146,18 @@ export default function Dashboard() {
             const [rentalsRes, sellerRes, productsRes] = await Promise.all([
                 api.get('/rentals/me', withToken(token)),
                 api.get('/rentals/seller', withToken(token)),
-                api.get('/products'),
+                api.get('/products/mine', withToken(token)),
             ]);
 
-            setMyRentals(rentalsRes.data.rentals || []);
-            setSellerRentals(sellerRes.data.rentals || []);
+            const myR = rentalsRes.data.rentals || [];
+            const sellerR = sellerRes.data.rentals || [];
+            const myP = productsRes.data.products || [];
 
-            // Show all products in "My Listings" tab for now
-            setMyListings(productsRes.data.products || []);
+            console.log(`✅ [Dashboard] ${myR.length} my rentals | ${sellerR.length} seller requests | ${myP.length} my products`);
 
-            console.log(`✅ [Dashboard] ${rentalsRes.data.rentals?.length} my rentals | ${sellerRes.data.rentals?.length} seller requests | ${productsRes.data.products?.length} products`);
+            setMyRentals(myR);
+            setSellerRentals(sellerR);
+            setMyListings(myP);
         } catch (err) {
             console.error('❌ [Dashboard] Load failed:', err.message);
         } finally {
@@ -317,9 +319,25 @@ export default function Dashboard() {
                                                     : <Package size={40} className="text-[#73ab84] dark:text-[#79c7c5] opacity-40" />}
                                             </div>
                                             <div className="p-4">
-                                                <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1">{item.title}</h3>
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <span className="text-xs font-medium text-[#73ab84] dark:text-[#79c7c5]">₹{item.pricePerDay}/day</span>
+                                                <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1 mb-1">{item.title}</h3>
+                                                {/* Owner info */}
+                                                {item.owner && (
+                                                    <div className="flex items-center gap-1.5 mb-2">
+                                                        <div className="w-5 h-5 rounded-full bg-[#99d19c]/30 flex items-center justify-center">
+                                                            <User size={11} className="text-[#73ab84]" />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-[#3d6b50] dark:text-[#79c7c5] truncate">{item.owner.name || 'You'}</p>
+                                                            {item.owner.email && (
+                                                                <p className="text-[10px] text-[#73ab84]/70 dark:text-[#79c7c5]/50 truncate flex items-center gap-0.5">
+                                                                    <Mail size={9} /> {item.owner.email}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-medium text-[#73ab84] dark:text-[#79c7c5]">₹{item.pricePerDay?.toLocaleString('en-IN')}/day</span>
                                                     <Badge variant={item.availability ? 'success' : 'pending'}>
                                                         {item.availability ? 'Active' : 'Unavailable'}
                                                     </Badge>

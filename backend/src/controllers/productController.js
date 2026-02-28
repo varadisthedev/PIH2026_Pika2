@@ -114,6 +114,24 @@ export const getProducts = async (req, res) => {
     }
 };
 
+// GET /api/products/mine  (authenticated — returns current user's own listings)
+export const getMyProducts = async (req, res) => {
+    try {
+        const ownerId = req.dbUser._id;
+        console.log(`📦 [productController] GET /products/mine | owner: ${ownerId}`);
+
+        const products = await Product.find({ owner: ownerId })
+            .populate('owner', 'name email')
+            .sort({ createdAt: -1 });
+
+        console.log(`✅ [productController] Found ${products.length} products for owner ${ownerId}`);
+        res.status(200).json({ products, total: products.length });
+    } catch (error) {
+        console.error('❌ [productController] getMyProducts error:', error.message);
+        res.status(500).json({ error: 'Failed to fetch your products' });
+    }
+};
+
 // GET /api/products/:id  (public)
 export const getProductById = async (req, res) => {
     try {

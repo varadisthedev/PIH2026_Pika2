@@ -1,16 +1,21 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import { requireAuth } from '@clerk/express';
 
 const router = express.Router();
 
-// Ensure uploads directory exists
-const uploadDir = path.resolve('uploads');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// __dirname = backend/src  →  ../uploads = backend/uploads
+const uploadDir = path.resolve(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
+console.log('📁 [uploadRoutes] Saving uploads to:', uploadDir);
 
 const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),

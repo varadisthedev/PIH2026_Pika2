@@ -1,19 +1,22 @@
 import express from 'express';
 import { requireAuth } from '@clerk/express';
 import syncUser from '../middleware/syncUser.js';
-import requireRole from '../middleware/roleMiddleware.js';
 import {
     createProduct,
     getProducts,
     getProductById,
+    getMyProducts,
     updateProduct,
     deleteProduct,
 } from '../controllers/productController.js';
 
 const router = express.Router();
 
-// GET /api/products – public (no auth needed)
+// GET /api/products – public
 router.get('/', getProducts);
+
+// GET /api/products/mine – authenticated: returns the current user's own listings
+router.get('/mine', requireAuth(), syncUser, getMyProducts);
 
 // GET /api/products/:id – public
 router.get('/:id', getProductById);
