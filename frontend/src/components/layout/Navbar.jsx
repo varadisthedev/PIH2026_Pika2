@@ -72,7 +72,7 @@ export default function Navbar() {
                         <img 
                             src="/trans.png" 
                             alt="RentiGO Logo" 
-                            className="w-14 h-14 object-contain scale-[1.35] group-hover:scale-[1.5] transition-transform duration-300 drop-shadow-2xl ml-2" 
+                            className="w-20 h-20 object-contain scale-[1.5] group-hover:scale-[1.65] transition-transform duration-300 drop-shadow-2xl ml-2" 
                         />
                         <span className="text-2xl font-black tracking-tighter text-brand-dark dark:text-brand-frost hidden xs:block uppercase ml-2">
                             Renti<span className="text-brand-green">GO</span>

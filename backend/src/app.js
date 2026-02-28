@@ -8,6 +8,7 @@ import userRoutes from './routes/userRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import rentalRoutes from './routes/rentalRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 import { requireAuth } from '@clerk/express';
 import syncUser from './middleware/syncUser.js';
 import requireRole from './middleware/roleMiddleware.js';
@@ -68,6 +69,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/rentals', rentalRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/chats', chatRoutes);
 
 // Admin rentals route (mounted on /api/admin to keep it clearly separated)
 app.get(

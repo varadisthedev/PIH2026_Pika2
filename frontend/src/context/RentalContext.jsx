@@ -133,33 +133,7 @@ export function RentalProvider({ children }) {
             { id: 3, message: 'Welcome to RentiGO! Complete your profile to build trust.', type: 'info', time: '1 day ago', read: true },
         ]);
 
-        setMessages([
-            {
-                id: 'chat-1',
-                withUser: 'Rahul S.',
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul',
-                lastMessage: 'Is the camera fully charged?',
-                time: '10:45 AM',
-                unreadCount: 1,
-                messages: [
-                    { id: 1, text: 'Hi, I am interested in your DSLR.', sentByMe: false, time: '10:30 AM' },
-                    { id: 2, text: 'Sure! It is available for those dates.', sentByMe: true, time: '10:35 AM' },
-                    { id: 3, text: 'Is the camera fully charged?', sentByMe: false, time: '10:45 AM' },
-                ]
-            },
-            {
-                id: 'chat-2',
-                withUser: 'Sneha K.',
-                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha',
-                lastMessage: 'Thanks for the quick return!',
-                time: 'Yesterday',
-                unreadCount: 0,
-                messages: [
-                    { id: 1, text: 'I am nearby for the pickup.', sentByMe: false, time: 'Yesterday' },
-                    { id: 2, text: 'Great, see you in 5.', sentByMe: true, time: 'Yesterday' },
-                ]
-            }
-        ]);
+
     }, []);
 
     return (
