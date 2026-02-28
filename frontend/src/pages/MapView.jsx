@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Search, List, Filter, SlidersHorizontal, ArrowLeft, Star, IndianRupee, ShieldCheck } from 'lucide-react';
 import { useRental } from '../context/RentalContext.jsx';
-import { fetchItems } from '../api/services.js';
+import api from '../api/axios.js';
 import Container from '../components/layout/Container.jsx';
 import Button from '../components/ui/Button.jsx';
 import Badge from '../components/ui/Badge.jsx';
@@ -16,8 +16,8 @@ export default function MapView() {
     const [selectedItem, setSelectedItem] = useState(null);
 
     useEffect(() => {
-        fetchItems()
-            .then(data => { setItems(data.items || data); setLoading(false); })
+        api.get('/products', { params: { limit: 100 } })
+            .then(res => { setItems(res.data.products || []); setLoading(false); })
             .catch(() => setLoading(false));
     }, []);
 

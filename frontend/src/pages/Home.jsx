@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, ArrowRight, ShieldCheck, Zap, Users, Camera, Bike, Hammer, Laptop, Music, Dumbbell } from 'lucide-react';
-import { fetchItems } from '../api/services.js';
+import api from '../api/axios.js';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { LoadingGrid, ErrorState } from '../components/items/ItemStates.jsx';
 import Container from '../components/layout/Container.jsx';
@@ -21,7 +21,6 @@ const HOW_IT_WORKS = [
     { icon: ShieldCheck, title: 'Rent with Trust', desc: 'Secure payments, owner verification, and small security deposits for peace of mind.' },
     { icon: Zap, title: 'Pick up & Enjoy', desc: 'Coordinate a quick hand-off and get to work. No shipping waste, no clutter.' },
 ];
-
 export default function Home() {
     const [searchQuery, setSearchQuery] = useState('');
     const [locationName, setLocationName] = useState('Mumbai, MH');
@@ -33,12 +32,13 @@ export default function Home() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchItems({})
-            .then(data => {
-                setFeatured((data.items || data).slice(0, 4));
+        api.get('/products', { params: { limit: 4 } })
+            .then(res => {
+                setFeatured(res.data.products || []);
                 setLoading(false);
             })
-            .catch(() => {
+            .catch((err) => {
+                console.error("[Home] Error fetching featured items:", err);
                 setError('Could not load featured items.');
                 setLoading(false);
             });

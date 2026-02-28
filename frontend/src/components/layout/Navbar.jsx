@@ -1,16 +1,4 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, Menu, X, MapPin, LayoutDashboard, Package } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext.jsx';
-import { useAuth, useUser, UserButton, SignInButton } from '@clerk/clerk-react';
-
-const PUBLIC_NAV = [
-    { label: 'Browse', to: '/browse', icon: Package },
-];
-const AUTH_NAV = [
-    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-=======
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     Sun, Moon, Menu, X, MapPin, LayoutDashboard, LogIn, Package,
@@ -18,19 +6,20 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { useRental } from '../../context/RentalContext.jsx';
+import { useAuth, useUser, UserButton, SignInButton } from '@clerk/clerk-react';
 import Button from '../ui/Button.jsx';
 import Badge from '../ui/Badge.jsx';
 
 const RENTER_LINKS = [
     { label: 'Browse Gear', to: '/browse', icon: Search },
     { label: 'My Bookings', to: '/my-bookings', icon: Clock },
+    { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
 ];
 
 const LENDER_LINKS = [
     { label: 'My Listings', to: '/my-listings', icon: Package },
     { label: 'List an Item', to: '/list-item', icon: Plus },
     { label: 'My Earnings', to: '/earnings', icon: LayoutDashboard },
->>>>>>> SharvariFrontend
 ];
 
 export default function Navbar() {
@@ -40,10 +29,11 @@ export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
+
     const { isSignedIn, isLoaded } = useAuth();
     const { user } = useUser();
 
-    // Log auth state whenever it changes
     useEffect(() => {
         if (isLoaded) {
             console.log(`🔐 [Navbar] isSignedIn: ${isSignedIn} | user: ${user?.primaryEmailAddress?.emailAddress ?? 'guest'}`);
@@ -58,7 +48,6 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
-    // Close menus on route change
     useEffect(() => {
         setMobileOpen(false);
         setProfileOpen(false);
@@ -88,11 +77,6 @@ export default function Navbar() {
                         </span>
                     </Link>
 
-<<<<<<< HEAD
-                    {/* Desktop Nav */}
-                    <nav className="hidden md:flex items-center gap-2">
-                        {[...PUBLIC_NAV, ...(isSignedIn ? AUTH_NAV : [])].map(({ label, to, icon: Icon }) => (
-=======
                     {/* Role Switcher (Desktop) */}
                     <div className="hidden lg:flex items-center bg-brand-dark/5 dark:bg-white/5 p-1 rounded-2xl mx-8 shadow-inner border border-brand-teal/5">
                         <button
@@ -116,7 +100,6 @@ export default function Navbar() {
                     {/* Desktop Center Nav */}
                     <nav className="hidden md:flex items-center gap-1">
                         {navLinks.map(({ label, to, icon: Icon }) => (
->>>>>>> SharvariFrontend
                             <Link
                                 key={to}
                                 to={to}
@@ -132,33 +115,6 @@ export default function Navbar() {
                     </nav>
 
                     {/* Right Actions */}
-<<<<<<< HEAD
-                    <div className="flex items-center gap-3">
-                        {/* Dark mode toggle */}
-                        <button
-                            onClick={toggleTheme}
-                            className="p-2.5 rounded-2xl text-brand-teal hover:bg-brand-teal/10 dark:text-brand-aqua dark:hover:bg-brand-aqua/10 transition-all duration-300"
-                            aria-label="Toggle dark mode"
-                        >
-                            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-                        </button>
-
-                        {/* Auth – desktop only */}
-                        <div className="hidden md:flex items-center">
-                            {!isLoaded ? (
-                                <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse" />
-                            ) : isSignedIn ? (
-                                <UserButton afterSignOutUrl="/" />
-                            ) : (
-                                <SignInButton mode="modal">
-                                    <button
-                                        className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark hover:scale-105 transition-transform"
-                                        onClick={() => console.log('🔐 [Navbar] Sign In clicked')}
-                                    >
-                                        Sign In
-                                    </button>
-                                </SignInButton>
-=======
                     <div className="flex items-center gap-2">
                         <div className="items-center gap-2 hidden sm:flex">
                             <button
@@ -182,54 +138,67 @@ export default function Navbar() {
 
                             <button
                                 onClick={toggleTheme}
-                                className="p-2.5 rounded-2xl text-brand-teal hover:bg-brand-teal/5 dark:text-brand-aqua dark:hover:bg-brand-aqua/10 transition-all duration-300"
-                                aria-label="Toggle Theme"
+                                className="p-2.5 rounded-2xl text-brand-teal hover:bg-brand-teal/10 dark:text-brand-aqua dark:hover:bg-brand-aqua/10 transition-all duration-300"
+                                aria-label="Toggle dark mode"
                             >
                                 {isDark ? <Sun size={20} /> : <Moon size={20} />}
                             </button>
                         </div>
 
-                        {/* User Profile Dropdown */}
-                        <div className="relative ml-2">
-                            <button
-                                onClick={() => setProfileOpen(!profileOpen)}
-                                className={`flex items-center gap-2 p-1.5 pl-3 rounded-2xl transition-all ${profileOpen ? 'bg-brand-dark text-white dark:bg-brand-green dark:text-brand-dark' : 'glass-card hover:bg-brand-teal/5'}`}
-                            >
-                                <div className="hidden xs:block">
-                                    <div className={`text-[9px] font-black uppercase tracking-tight text-right ${profileOpen ? 'text-white/60 dark:text-brand-dark/60' : 'text-brand-teal/40'}`}>Verified Neighbour</div>
-                                    <div className="text-[11px] font-black uppercase tracking-tighter leading-none">{userProfile.name.split(' ')[0]}</div>
+                        {/* Auth / Profile Area */}
+                        <div className="flex items-center">
+                            {!isLoaded ? (
+                                <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse ml-2" />
+                            ) : isSignedIn ? (
+                                <div className="ml-2">
+                                    <UserButton afterSignOutUrl="/" />
                                 </div>
-                                <div className="w-8 h-8 rounded-xl overflow-hidden shadow-xl shrink-0 group">
-                                    <img src={userProfile.avatar} alt="" className="w-full h-full object-cover bg-white" />
-                                </div>
-                                <ChevronDown size={14} className={`hidden xs:block transition-transform duration-300 ${profileOpen && 'rotate-180'}`} />
-                            </button>
-
-                            {profileOpen && (
-                                <div className="absolute right-0 mt-4 w-64 glass-nav shadow-2xl rounded-[2.5rem] border border-brand-teal/5 p-4 animate-fade-down overflow-hidden z-[101]">
-                                    <div className="flex flex-col gap-1">
-                                        {[
-                                            { icon: User, label: 'My Profile', to: '/profile' },
-                                            { icon: Heart, label: 'Wishlist', to: '/wishlist' },
-                                            { icon: LogIn, label: 'Switch Account', to: '/login' },
-                                        ].map((link, i) => (
-                                            <Link
-                                                key={i}
-                                                to={link.to}
-                                                className="flex items-center gap-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-brand-teal/60 hover:text-brand-dark dark:hover:text-brand-frost hover:bg-brand-teal/5 transition-all"
-                                            >
-                                                <link.icon size={18} /> {link.label}
-                                            </Link>
-                                        ))}
-                                        <div className="h-px bg-brand-teal/5 my-2 mx-4" />
-                                        <button className="flex items-center gap-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-500/10 transition-all">
-                                            <LogOut size={18} /> Sign Out
-                                        </button>
-                                    </div>
-                                </div>
->>>>>>> SharvariFrontend
+                            ) : (
+                                <SignInButton mode="modal">
+                                    <button
+                                        className="ml-2 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark hover:scale-105 transition-transform"
+                                    >
+                                        Sign In
+                                    </button>
+                                </SignInButton>
                             )}
                         </div>
+
+                        {/* Traditional Profile Dropdown (Only if needed or to show extra info) */}
+                        {isSignedIn && (
+                            <div className="relative ml-2">
+                                <button
+                                    onClick={() => setProfileOpen(!profileOpen)}
+                                    className={`flex items-center gap-2 p-1.5 pl-3 rounded-2xl transition-all ${profileOpen ? 'bg-brand-dark text-white dark:bg-brand-green dark:text-brand-dark' : 'glass-card hover:bg-brand-teal/5'}`}
+                                >
+                                    <div className="hidden xs:block">
+                                        <div className={`text-[9px] font-black uppercase tracking-tight text-right ${profileOpen ? 'text-white/60 dark:text-brand-dark/60' : 'text-brand-teal/40'}`}>Verified Neighbour</div>
+                                        <div className="text-[11px] font-black uppercase tracking-tighter leading-none">{user?.firstName || 'User'}</div>
+                                    </div>
+                                    <ChevronDown size={14} className={`hidden xs:block transition-transform duration-300 ${profileOpen && 'rotate-180'}`} />
+                                </button>
+
+                                {profileOpen && (
+                                    <div className="absolute right-0 mt-4 w-64 glass-nav shadow-2xl rounded-[2.5rem] border border-brand-teal/5 p-4 animate-fade-down overflow-hidden z-[101]">
+                                        <div className="flex flex-col gap-1">
+                                            {[
+                                                { icon: User, label: 'My Profile', to: '/profile' },
+                                                { icon: Heart, label: 'Wishlist', to: '/wishlist' },
+                                                { icon: Settings, label: 'Settings', to: '/profile' },
+                                            ].map((link, i) => (
+                                                <Link
+                                                    key={i}
+                                                    to={link.to}
+                                                    className="flex items-center gap-4 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-brand-teal/60 hover:text-brand-dark dark:hover:text-brand-frost hover:bg-brand-teal/5 transition-all"
+                                                >
+                                                    <link.icon size={18} /> {link.label}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <button
                             onClick={() => setMobileOpen(!mobileOpen)}
@@ -243,21 +212,9 @@ export default function Navbar() {
 
             {/* Mobile Menu */}
             {mobileOpen && (
-<<<<<<< HEAD
-                <div className="md:hidden glass-nav border-t border-[#99d19c]/20 dark:border-[#79c7c5]/10 px-4 pb-4 pt-2 animate-fade-up">
-                    <nav className="flex flex-col gap-1">
-                        {[...PUBLIC_NAV, ...(isSignedIn ? AUTH_NAV : [])].map(({ label, to, icon: Icon }) => (
-=======
                 <div className="md:hidden glass-nav border-t border-brand-teal/10 p-6 animate-fade-in flex flex-col gap-6 shadow-2xl max-h-[85vh] overflow-y-auto w-[98%] mx-auto mt-2 rounded-[2rem]">
-                    {/* Mobile Notification Hint */}
-                    <div className="flex items-center justify-between px-4 py-4 rounded-3xl bg-brand-teal/5 border border-brand-teal/5">
-                        <div className="flex items-center gap-4">
-                            <Bell size={20} className="text-brand-teal" />
-                            <span className="text-xs font-black uppercase tracking-wide">Notifications</span>
-                        </div>
-                        {unreadCount > 0 && <Badge variant="success" className="px-3 py-1 font-black leading-none !text-[10px]">{unreadCount} New</Badge>}
-                    </div>
 
+                    {/* Role Switcher (Mobile) */}
                     <div className="flex bg-brand-dark/5 dark:bg-white/5 p-1.5 rounded-[2rem] border border-brand-teal/5">
                         <button
                             onClick={toggleRole}
@@ -275,7 +232,6 @@ export default function Navbar() {
 
                     <nav className="flex flex-col gap-2">
                         {navLinks.map(({ label, to, icon: Icon }) => (
->>>>>>> SharvariFrontend
                             <Link
                                 key={to}
                                 to={to}
@@ -284,24 +240,6 @@ export default function Navbar() {
                                 <Icon size={20} /> {label}
                             </Link>
                         ))}
-<<<<<<< HEAD
-                        <div className="mt-2 flex justify-center">
-                            {!isLoaded ? (
-                                <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse" />
-                            ) : isSignedIn ? (
-                                <UserButton afterSignOutUrl="/" />
-                            ) : (
-                                <SignInButton mode="modal">
-                                    <button
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark"
-                                        onClick={() => console.log('🔐 [Navbar Mobile] Sign In clicked')}
-                                    >
-                                        Sign In
-                                    </button>
-                                </SignInButton>
-                            )}
-                        </div>
-=======
                         <Link
                             to="/wishlist"
                             className="flex items-center gap-4 p-5 rounded-[2rem] text-sm font-black uppercase tracking-widest text-brand-teal/60"
@@ -314,15 +252,29 @@ export default function Navbar() {
                         >
                             <MessageSquare size={20} /> Neighborhood Chat
                         </Link>
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            className="mt-6 !rounded-[2.5rem] shadow-xl shadow-brand-green/20"
-                            onClick={() => navigate('/profile')}
-                        >
-                            <User size={18} /> My Account
-                        </Button>
->>>>>>> SharvariFrontend
+
+                        <div className="mt-4 flex flex-col gap-3">
+                            {isSignedIn ? (
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    className="!rounded-[2.5rem] shadow-xl shadow-brand-green/20"
+                                    onClick={() => navigate('/profile')}
+                                >
+                                    <User size={18} /> My Account
+                                </Button>
+                            ) : (
+                                <SignInButton mode="modal">
+                                    <Button
+                                        variant="primary"
+                                        size="lg"
+                                        className="!rounded-[2.5rem] shadow-xl shadow-brand-green/20 w-full"
+                                    >
+                                        <LogIn size={18} /> Sign In
+                                    </Button>
+                                </SignInButton>
+                            )}
+                        </div>
                     </nav>
 
                     <div className="flex justify-center pt-4">

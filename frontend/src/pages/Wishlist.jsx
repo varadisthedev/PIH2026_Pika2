@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Search, ArrowRight, Trash2 } from 'lucide-react';
 import { useRental } from '../context/RentalContext.jsx';
-import { fetchItems } from '../api/services.js';
+import api from '../api/axios.js';
 import Container from '../components/layout/Container.jsx';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { EmptyState, LoadingGrid } from '../components/items/ItemStates.jsx';
@@ -17,10 +17,10 @@ export default function Wishlist() {
 
     useEffect(() => {
         setLoading(true);
-        fetchItems()
-            .then(data => {
-                const results = data.items || data;
-                setSavedItems(results.filter(item => wishlist.includes(item.id)));
+        api.get('/products', { params: { limit: 100 } })
+            .then(res => {
+                const results = res.data.products || [];
+                setSavedItems(results.filter(item => wishlist.includes(item._id) || wishlist.includes(item.id)));
                 setLoading(false);
             })
             .catch(() => setLoading(false));

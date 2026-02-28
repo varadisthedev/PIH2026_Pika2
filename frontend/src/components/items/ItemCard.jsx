@@ -20,33 +20,37 @@ export default function ItemCard({ item }) {
         rating,
         reviewCount,
         available,
+        availability,       // backend field
+        isVerified,         // backend field
+        verified,           // placeholder compat
     } = item;
 
     const itemId = _id || id;
     const imgSrc = (images && images[0]) || image;
     const isAvailable = availability ?? available ?? true;
-    const displayAddress = typeof location === 'string' ? location : (location?.address || null);
+    const displayAddress = typeof location === 'string' ? location : (location?.address || 'Local Neighborhood');
     const displayDistance = distanceKm ?? distance ?? null;
+    const hasVerified = isVerified || verified;
 
     const { wishlist, toggleWishlist } = useRental();
-    const isWishlisted = wishlist.includes(id);
+    const isWishlisted = wishlist.includes(itemId);
     const [imgError, setImgError] = useState(false);
 
     const handleWishlist = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleWishlist(id);
+        toggleWishlist(itemId);
     };
 
     return (
-        <Link to={`/item/${id}`} className="block group">
-            <Card variant="glass" hover className="overflow-hidden h-full">
-                {/* Image */}
-                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#99d19c]/30 to-[#79c7c5]/20 dark:from-[#99d19c]/10 dark:to-[#79c7c5]/8">
+        <Link to={`/item/${itemId}`} className="block group h-full">
+            <Card variant="glass" hover className="overflow-hidden h-full flex flex-col">
+                {/* Image Section */}
+                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-brand-green/10 to-brand-teal/10">
                     {imgError ? (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-[#73ab84] dark:text-[#79c7c5]">
-                            <ImageOff size={32} className="opacity-40" />
-                            <span className="text-xs font-semibold opacity-60">{category}</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-brand-teal/40">
+                            <ImageOff size={32} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{category}</span>
                         </div>
                     ) : (
                         <img
@@ -58,16 +62,13 @@ export default function ItemCard({ item }) {
                         />
                     )}
 
-                    {/* Verified Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                    {/* Tags Layer */}
+                    {/* Tags Overlay */}
                     <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                         <div className="flex gap-2">
                             <Badge variant="info" className="!bg-white/90 !text-brand-dark shadow-sm uppercase tracking-tighter text-[10px] py-1 px-2.5">
                                 {category}
                             </Badge>
-                            {verified && (
+                            {hasVerified && (
                                 <div className="flex items-center gap-1 bg-brand-green text-brand-dark px-2 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg">
                                     <ShieldCheck size={10} /> Verified
                                 </div>
@@ -75,56 +76,62 @@ export default function ItemCard({ item }) {
                         </div>
                     </div>
 
-                    {/* Availability dot */}
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold backdrop-blur-sm"
+                    {/* Availability Dot */}
+                    <div
+                        className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-lg"
                         style={{
-                            backgroundColor: available ? 'rgba(153, 209, 156, 0.85)' : 'rgba(250, 160, 160, 0.85)',
-                            color: available ? '#1a4d2a' : '#7f1d1d',
+                            backgroundColor: isAvailable ? 'rgba(153, 209, 156, 0.9)' : 'rgba(250, 160, 160, 0.9)',
+                            color: isAvailable ? '#000501' : '#7f1d1d',
                         }}
                     >
-                        <span className={`w-1.5 h-1.5 rounded-full ${available ? 'bg-emerald-600' : 'bg-red-500'}`} />
-                        {available ? 'Available' : 'Unavailable'}
+                        <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-emerald-600 animate-pulse' : 'bg-red-500'}`} />
+                        {isAvailable ? 'Available' : 'Rented'}
                     </div>
+
+                    {/* Wishlist Button */}
+                    <button
+                        onClick={handleWishlist}
+                        className={`absolute top-3 left-3 p-2 rounded-xl transition-all duration-300 pointer-events-auto ${isWishlisted ? 'bg-red-500 text-white shadow-lg' : 'bg-white/80 text-brand-teal hover:bg-white'}`}
+                    >
+                        <Heart size={16} className={isWishlisted ? 'fill-current' : ''} />
+                    </button>
                 </div>
 
                 {/* Content Section */}
-                <div className="p-5 flex flex-col justify-between flex-grow">
-                    <div>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                            <h3 className="font-black text-brand-dark dark:text-brand-frost text-base leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-brand-teal transition-colors">
-                                {title}
-                            </h3>
-                        </div>
+                <div className="p-5 flex flex-col flex-grow">
+                    <div className="flex-grow">
+                        <h3 className="font-black text-brand-dark dark:text-brand-frost text-base leading-tight line-clamp-2 min-h-[2.5rem] group-hover:text-brand-green transition-colors mb-2">
+                            {title}
+                        </h3>
 
-                        {/* Location */}
-                        <div className="flex items-center gap-1 text-xs font-semibold text-brand-teal dark:text-brand-aqua mt-1">
-                            <MapPin size={14} />
-                            <span className="line-clamp-1">{location}</span>
-                            <span className="ml-auto shrink-0 opacity-60">{distance} km</span>
+                        {/* Location & Distance */}
+                        <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-brand-teal/60">
+                            <MapPin size={12} className="text-brand-green" />
+                            <span className="line-clamp-1">{displayAddress}</span>
+                            {displayDistance && (
+                                <span className="ml-auto shrink-0 bg-brand-teal/5 px-2 py-0.5 rounded-md">• {displayDistance} km</span>
+                            )}
                         </div>
-                        )}
                     </div>
 
-                    {/* Price & Rating Footer */}
-                    <div className="flex items-end justify-between pt-4 border-t border-brand-teal/10 dark:border-brand-aqua/10">
+                    {/* Footer Info */}
+                    <div className="mt-5 pt-4 border-t border-brand-teal/5 flex items-end justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black uppercase tracking-tighter text-brand-teal/60 mb-0.5">Starting at</span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-teal/40 mb-1">Per Day</span>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-black text-brand-dark dark:text-brand-frost">
-                                    ₹{pricePerDay.toLocaleString('en-IN')}
+                                <span className="text-2xl font-black text-brand-dark dark:text-brand-frost leading-none">
+                                    ₹{pricePerDay?.toLocaleString('en-IN')}
                                 </span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-brand-teal/60">/ day</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-brand-green/10 dark:bg-brand-green/5 text-xs font-black text-brand-teal dark:text-brand-green">
-                            <Star size={14} className="fill-brand-teal dark:fill-brand-green" />
-                            <span>{rating}</span>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-teal/5 text-[11px] font-black text-brand-dark dark:text-brand-frost">
+                            <Star size={14} className="fill-brand-green text-brand-green" />
+                            <span>{rating || '5.0'}</span>
                         </div>
-                        ) : null}
                     </div>
                 </div>
-            </Link>
-        </Card>
+            </Card>
+        </Link>
     );
 }

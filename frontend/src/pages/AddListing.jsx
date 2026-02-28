@@ -10,12 +10,16 @@ import Button from '../components/ui/Button.jsx';
 import Card from '../components/ui/Card.jsx';
 import { CATEGORIES } from '../api/placeholder.js';
 
+import { useAuth } from '@clerk/clerk-react';
+import api from '../api/axios.js';
+
 const STEPS = ['Basics', 'Pricing', 'Location', 'Photos', 'Review'];
 
 export default function AddListing() {
     const navigate = useNavigate();
-    const { createListing } = useRental();
+    const { getToken } = useAuth();
     const [currentStep, setCurrentStep] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -41,25 +45,31 @@ export default function AddListing() {
         else navigate(-1);
     };
 
-    const handleSubmit = () => {
-        // Mock submission
-        const newListing = {
-            ...formData,
-            id: Date.now().toString(),
-            pricePerDay: Number(formData.pricePerDay),
-            securityDeposit: Number(formData.securityDeposit),
-            rating: 5.0,
-            reviewCount: 0,
-            ownerName: 'You',
-            ownerAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=you',
-            status: 'active',
-            available: true,
-            verified: true,
-            distance: 0.1,
-            image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800" // Placeholder
-        };
-        createListing(newListing);
-        navigate('/my-listings');
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            const token = await getToken();
+            const newListing = {
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                pricePerDay: Number(formData.pricePerDay),
+                securityDeposit: Number(formData.securityDeposit),
+                location: { address: formData.location },
+                images: ["https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=800"] // Placeholder image until upload logic is implemented
+            };
+
+            await api.post('/products', newListing, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            navigate('/my-listings');
+        } catch (err) {
+            console.error("Failed to create listing:", err);
+            // Optionally set error state to show user
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const renderStepContent = () => {
@@ -86,8 +96,8 @@ export default function AddListing() {
                                         key={cat}
                                         onClick={() => updateForm({ category: cat })}
                                         className={`p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${formData.category === cat
-                                                ? 'bg-brand-dark text-white dark:bg-brand-green dark:text-brand-dark shadow-xl'
-                                                : 'glass-card text-brand-teal hover:bg-brand-teal/5'
+                                            ? 'bg-brand-dark text-white dark:bg-brand-green dark:text-brand-dark shadow-xl'
+                                            : 'glass-card text-brand-teal hover:bg-brand-teal/5'
                                             }`}
                                     >
                                         {cat}

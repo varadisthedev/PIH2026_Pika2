@@ -1,16 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-<<<<<<< HEAD
-import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import api from '../api/axios.js';
-=======
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Search, SlidersHorizontal, X, ChevronDown, MapPin, Star, ShieldCheck,
     ArrowUpDown, Filter, Map as MapIcon, Grid, LayoutGrid, List, Sliders, Settings2, ChevronRight
 } from 'lucide-react';
-import { fetchItems } from '../api/services.js';
->>>>>>> SharvariFrontend
+import api from '../api/axios.js';
 import { CATEGORIES } from '../api/placeholder.js';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { LoadingGrid, EmptyState, ErrorState } from '../components/items/ItemStates.jsx';
@@ -25,12 +19,8 @@ export default function Browse() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-<<<<<<< HEAD
-    const [filtersOpen, setFiltersOpen] = useState(false);
-    const [userCoords, setUserCoords] = useState(null); // { lat, lng }
-=======
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
->>>>>>> SharvariFrontend
+    const [userCoords, setUserCoords] = useState(null); // { lat, lng }
 
     // Filter States
     const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -59,54 +49,37 @@ export default function Browse() {
         setLoading(true);
         setError(null);
         try {
-<<<<<<< HEAD
             const params = {};
             if (search) params.search = search;
             if (category !== 'All') params.category = category;
             if (maxPrice) params.maxPrice = Number(maxPrice);
-            if (userCoords) { params.userLat = userCoords.lat; params.userLng = userCoords.lng; }
+            if (userCoords) {
+                params.userLat = userCoords.lat;
+                params.userLng = userCoords.lng;
+            }
 
             console.log('🔍 [Browse] Fetching products with filters:', params);
             const res = await api.get('/products', { params });
-            const items = res.data.products || [];
-            console.log(`✅ [Browse] Loaded ${items.length} products from backend`);
-            setItems(items);
-        } catch {
-            console.error('❌ [Browse] Failed to fetch products');
-=======
-            const filters = {
-                search,
-                category: category !== 'All' ? category : undefined,
-                maxPrice: maxPrice ? Number(maxPrice) : undefined,
-                distance: maxDistance,
-            };
+            const fetchedItems = res.data.products || [];
+            console.log(`✅ [Browse] Loaded ${fetchedItems.length} products from backend`);
 
-            const data = await fetchItems(filters);
-            let results = data.items || data;
-
-            // Client-side simulated filters
+            // Client-side simulated filters for those not handled by backend yet
+            let results = [...fetchedItems];
             if (minRating > 0) results = results.filter(i => i.rating >= minRating);
-            if (verifiedOnly) results = results.filter(i => i.verified !== false);
+            if (verifiedOnly) results = results.filter(i => i.isVerified !== false); // Backend uses isVerified or similar?
 
-            // Sorting
+            // Sorting (if not already handled by backend proximity)
             if (sortBy === 'price_low') results.sort((a, b) => a.pricePerDay - b.pricePerDay);
             if (sortBy === 'rating_high') results.sort((a, b) => b.rating - a.rating);
-            if (sortBy === 'nearest') results.sort((a, b) => a.distance - b.distance);
 
             setItems(results);
         } catch (e) {
-            console.error(e);
->>>>>>> SharvariFrontend
+            console.error('❌ [Browse] Failed to fetch products:', e);
             setError('Could not load items. Please try again.');
         } finally {
             setLoading(false);
         }
-<<<<<<< HEAD
-    }, [search, category, maxPrice, userCoords]);
-
-=======
-    }, [search, category, maxPrice, maxDistance, minRating, verifiedOnly, sortBy]);
->>>>>>> SharvariFrontend
+    }, [search, category, maxPrice, userCoords, minRating, verifiedOnly, sortBy]);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -150,7 +123,7 @@ export default function Browse() {
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16 pt-10 animate-fade-up">
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-brand-teal/40">
-                            <MapPin size={14} className="text-brand-green" /> Local Neighborhood: Bandra, Mumbai
+                            <MapPin size={14} className="text-brand-green" /> Local Neighborhood Explorer
                         </div>
                         <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-brand-dark dark:text-brand-frost leading-none">
                             Discover <span className="text-brand-green italic opacity-90">Gear.</span>
@@ -285,22 +258,21 @@ export default function Browse() {
                             </Button>
                         </div>
 
-                        {/* Results Grid */}
-                        {loading ? (
-                            <LoadingGrid count={6} />
-                        ) : error ? (
-                            <ErrorState message={error} onRetry={loadItems} />
-                        ) : items.length === 0 ? (
+                        {/* Grid */}
+                        {loading && <LoadingGrid count={8} />}
+                        {error && <ErrorState message={error} onRetry={loadItems} />}
+                        {!loading && !error && items.length === 0 && (
                             <EmptyState
                                 icon={Search}
-                                title="No local matches"
-                                description="Try adjusting your proximity or expanding the category catalog to find gear in neighboring areas."
-                                action={<Button variant="primary" size="lg" className="!rounded-2xl" onClick={clearFilters}>Reset Neighborhood View</Button>}
+                                title="No items found"
+                                description="Try adjusting your search or clearing filters to see more results."
+                                action={<Button variant="outline" onClick={clearFilters}>Clear Filters</Button>}
                             />
-                        ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                                {items.map((item, i) => (
-                                    <div key={item.id} className="animate-fade-up" style={{ animationDelay: `${(i % 6) * 100}ms` }}>
+                        )}
+                        {!loading && !error && items.length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {items.map(item => (
+                                    <div key={item._id || item.id} className="animate-fade-up">
                                         <ItemCard item={item} />
                                     </div>
                                 ))}
@@ -386,33 +358,8 @@ export default function Browse() {
                             </Button>
                         </div>
                     </div>
-<<<<<<< HEAD
-                )}
-
-                {/* Grid */}
-                {loading && <LoadingGrid count={8} />}
-                {error && <ErrorState message={error} onRetry={loadItems} />}
-                {!loading && !error && items.length === 0 && (
-                    <EmptyState
-                        icon={Search}
-                        title="No items found"
-                        description="Try adjusting your search or clearing filters to see more results."
-                        action={<Button variant="outline" onClick={clearFilters}>Clear Filters</Button>}
-                    />
-                )}
-                {!loading && !error && items.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {items.map(item => (
-                            <ItemCard key={item._id || item.id} item={item} />
-                        ))}
-                    </div>
-                )}
-
-            </Container>
-=======
                 </div>
             )}
->>>>>>> SharvariFrontend
         </div>
     );
 }

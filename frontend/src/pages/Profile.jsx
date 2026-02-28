@@ -106,7 +106,7 @@ export default function Profile() {
                                 {[
                                     { icon: Bell, label: 'Activity & Notifications', to: '/notifications', desc: 'Manage your alerts and community updates' },
                                     { icon: CreditCard, label: 'Payment & Payouts', to: '/earnings', desc: 'Secure billing and earnings history' },
-                                    { icon: Package, label: userRole === 'renter' ? 'Booking History' : 'Inventory Manager', to: userRole === 'renter' ? '/my-bookings' : '/my-listings', desc: 'Track your local gear sharing' }
+                                    { icon: Package, label: userRole === 'renter' ? 'Booking History' : 'Inventory Manager', to: '/dashboard', desc: 'Track your local gear sharing' }
                                 ].map((item, i) => (
                                     <button
                                         key={i}

@@ -140,7 +140,6 @@ export const ITEMS_PLACEHOLDER = [
 ];
 
 export const CATEGORIES = [
-    'All',
     'Photography',
     'Tools',
     'Outdoors',
