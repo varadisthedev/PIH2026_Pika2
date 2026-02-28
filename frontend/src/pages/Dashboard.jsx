@@ -1,47 +1,50 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import {
     LayoutDashboard, Package, Clock, CheckCircle2, RotateCcw, IndianRupee, Plus,
-    Calendar, User, ArrowRight,
+    Calendar, ArrowRight, Loader2, Store, Trash2, Pencil, User, XCircle, Mail,
 } from 'lucide-react';
-import { useRental } from '../context/RentalContext.jsx';
+import { useAuth } from '@clerk/clerk-react';
+import api, { withToken } from '../api/axios.js';
 import Container from '../components/layout/Container.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
 import { EmptyState } from '../components/items/ItemStates.jsx';
+import ListItemModal from '../components/ListItemModal.jsx';
 
 const STATUS_ICON = {
-    Pending: <Clock size={14} />,
-    Approved: <CheckCircle2 size={14} />,
-    Returned: <RotateCcw size={14} />,
+    pending:   <Clock size={14} />,
+    approved:  <CheckCircle2 size={14} />,
+    completed: <RotateCcw size={14} />,
+    rejected:  <XCircle size={14} />,
+};
+const STATUS_COLOR = {
+    pending: 'pending', approved: 'success', completed: 'info', rejected: 'error',
 };
 
+/* ── Renter's incoming rental card ── */
 function RequestCard({ req }) {
+    const product = req.product || {};
     return (
         <div className="glass-card rounded-2xl p-4 flex gap-4 items-start card-hover">
-            <img
-                src={req.itemImage}
-                alt={req.itemTitle}
-                className="w-20 h-20 rounded-xl object-cover shrink-0 border border-[#99d19c]/30 dark:border-[#79c7c5]/15"
-            />
+            <div className="w-16 h-16 rounded-xl bg-[#99d19c]/20 dark:bg-[#79c7c5]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                {product.images?.[0]
+                    ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                    : <Package size={24} className="text-[#73ab84] opacity-40" />}
+            </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1">{req.itemTitle}</h3>
-                    <Badge variant={req.status.toLowerCase()} className="shrink-0">
-                        {STATUS_ICON[req.status]}
-                        {req.status}
+                    <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1">{product.title || 'Unknown'}</h3>
+                    <Badge variant={STATUS_COLOR[req.status] || 'pending'} className="shrink-0 capitalize flex items-center gap-1">
+                        {STATUS_ICON[req.status]}{req.status}
                     </Badge>
                 </div>
-                <p className="text-xs text-[#73ab84] dark:text-[#79c7c5] font-medium mb-2">
-                    <User size={11} className="inline mr-1" />{req.ownerName}
-                </p>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-[#73ab84] dark:text-[#79c7c5]">
                     <span className="flex items-center gap-1">
-                        <Calendar size={11} /> {req.startDate} → {req.endDate}
+                        <Calendar size={11} /> {new Date(req.startDate).toLocaleDateString()} → {new Date(req.endDate).toLocaleDateString()}
                     </span>
                     <span className="flex items-center gap-1 font-bold text-[#000501] dark:text-[#ade1e5]">
-                        <IndianRupee size={11} />
-                        {(req.pricePerDay * Math.max(1, Math.ceil((new Date(req.endDate) - new Date(req.startDate)) / 86400000))).toLocaleString('en-IN')}
+                        <IndianRupee size={11} /> {req.totalPrice?.toLocaleString('en-IN')}
                     </span>
                 </div>
             </div>
@@ -49,23 +52,158 @@ function RequestCard({ req }) {
     );
 }
 
+/* ── Seller's incoming request card (shows renter info + approve/reject) ── */
+function SellerRequestCard({ req, onStatusUpdate }) {
+    const [updating, setUpdating] = useState(false);
+    const product = req.product || {};
+    const renter = req.renter || {};
+
+    const update = async (status) => {
+        setUpdating(true);
+        try {
+            await onStatusUpdate(req._id, status);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    return (
+        <div className="glass-card rounded-2xl p-4 space-y-3">
+            {/* Product + status */}
+            <div className="flex items-start gap-3">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#99d19c]/20 shrink-0">
+                    {product.images?.[0]
+                        ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                        : <Package size={20} className="text-[#73ab84] opacity-40 m-auto mt-3" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                        <p className="font-bold text-brand-dark dark:text-brand-frost text-sm line-clamp-1">{product.title}</p>
+                        <Badge variant={STATUS_COLOR[req.status] || 'pending'} className="shrink-0 capitalize text-xs flex items-center gap-1">
+                            {STATUS_ICON[req.status]}{req.status}
+                        </Badge>
+                    </div>
+                    <p className="text-xs text-[#73ab84] mt-0.5">
+                        ₹{req.totalPrice?.toLocaleString('en-IN')} · {new Date(req.startDate).toLocaleDateString()} – {new Date(req.endDate).toLocaleDateString()}
+                    </p>
+                </div>
+            </div>
+
+            {/* Renter info */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#99d19c]/10 dark:bg-[#79c7c5]/5">
+                <User size={14} className="text-brand-teal dark:text-brand-green shrink-0" />
+                <div className="min-w-0">
+                    <p className="text-xs font-bold text-brand-dark dark:text-brand-frost">{renter.name || 'Unknown User'}</p>
+                    {renter.email && (
+                        <p className="text-[10px] text-[#73ab84] dark:text-[#79c7c5] flex items-center gap-1 truncate">
+                            <Mail size={9} /> {renter.email}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            {/* Actions (only if pending) */}
+            {req.status === 'pending' && (
+                <div className="flex gap-2">
+                    <button onClick={() => update('rejected')} disabled={updating}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold border border-red-300 dark:border-red-400/30 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50">
+                        Reject
+                    </button>
+                    <button onClick={() => update('approved')} disabled={updating}
+                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark hover:scale-[1.02] transition-transform disabled:opacity-50">
+                        {updating ? '…' : 'Approve'}
+                    </button>
+                </div>
+            )}
+            {req.status === 'approved' && (
+                <button onClick={() => update('completed')} disabled={updating}
+                    className="w-full py-2 rounded-xl text-xs font-bold border border-[#99d19c]/50 text-brand-teal dark:text-brand-green hover:bg-brand-teal/10 transition-colors disabled:opacity-50">
+                    {updating ? '…' : 'Mark as Completed'}
+                </button>
+            )}
+        </div>
+    );
+}
+
 export default function Dashboard() {
-    const { activeRequests, myListings } = useRental();
+    const { getToken, isSignedIn, isLoaded } = useAuth();
+
+    const [myRentals, setMyRentals] = useState([]);         // rentals I made as buyer
+    const [myListings, setMyListings] = useState([]);        // products I listed
+    const [sellerRentals, setSellerRentals] = useState([]); // requests on my listings
+    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('requests');
-    const navigate = useNavigate();
+    const [showListModal, setShowListModal] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+
+    const loadData = useCallback(async () => {
+        if (!isSignedIn) return;
+        setLoading(true);
+        try {
+            const token = await getToken();
+            console.log('📊 [Dashboard] Loading all data...');
+
+            const [rentalsRes, sellerRes, productsRes] = await Promise.all([
+                api.get('/rentals/me', withToken(token)),
+                api.get('/rentals/seller', withToken(token)),
+                api.get('/products'),
+            ]);
+
+            setMyRentals(rentalsRes.data.rentals || []);
+            setSellerRentals(sellerRes.data.rentals || []);
+
+            // Show all products in "My Listings" tab for now
+            setMyListings(productsRes.data.products || []);
+
+            console.log(`✅ [Dashboard] ${rentalsRes.data.rentals?.length} my rentals | ${sellerRes.data.rentals?.length} seller requests | ${productsRes.data.products?.length} products`);
+        } catch (err) {
+            console.error('❌ [Dashboard] Load failed:', err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [getToken, isSignedIn]);
+
+    useEffect(() => { if (isLoaded) loadData(); }, [isLoaded, loadData]);
+
+    const handleStatusUpdate = async (rentalId, status) => {
+        try {
+            const token = await getToken();
+            await api.patch(`/rentals/${rentalId}/status`, { status }, withToken(token));
+            console.log(`✅ [Dashboard] Rental ${rentalId} → ${status}`);
+            setSellerRentals(prev => prev.map(r => r._id === rentalId ? { ...r, status } : r));
+        } catch (err) {
+            console.error('❌ [Dashboard] Status update failed:', err.message);
+        }
+    };
+
+    const handleDeleteListing = async (productId) => {
+        if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+        setDeletingId(productId);
+        try {
+            const token = await getToken();
+            await api.delete(`/products/${productId}`, withToken(token));
+            console.log(`🗑️ [Dashboard] Product ${productId} deleted`);
+            setMyListings(prev => prev.filter(p => p._id !== productId));
+        } catch (err) {
+            console.error('❌ [Dashboard] Delete failed:', err.message);
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const TABS = [
-        { id: 'requests', label: 'Active Requests', icon: Clock, count: activeRequests.length },
-        { id: 'listings', label: 'My Listings', icon: Package, count: myListings.length },
+        { id: 'requests',       label: 'My Rentals',        icon: Clock,  count: myRentals.length },
+        { id: 'seller',         label: 'Incoming Requests', icon: Store,  count: sellerRentals.filter(r => r.status === 'pending').length },
+        { id: 'listings',       label: 'All Products',      icon: Package, count: myListings.length },
     ];
 
-    // Earnings summary
-    const earnings = activeRequests
-        .filter(r => r.status === 'Approved' || r.status === 'Returned')
-        .reduce((sum, r) => {
-            const days = Math.max(1, Math.ceil((new Date(r.endDate) - new Date(r.startDate)) / 86400000));
-            return sum + r.pricePerDay * days;
-        }, 0);
+    if (!isLoaded || loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 size={40} className="animate-spin text-brand-teal dark:text-brand-green" />
+            </div>
+        );
+    }
 
     return (
         <div className="pb-24 animate-fade-in">
@@ -82,18 +220,18 @@ export default function Dashboard() {
                             Dashboard
                         </h1>
                     </div>
-                    <Button variant="primary" size="md" onClick={() => navigate('/browse')} className="shadow-brand-green/20">
-                        <Plus size={18} /> Browse to Borrow
+                    <Button variant="primary" size="md" onClick={() => setShowListModal(true)}>
+                        <Plus size={18} /> List an Item
                     </Button>
                 </div>
 
-                {/* Stats row */}
+                {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                     {[
-                        { label: 'Total Requests', value: activeRequests.length, icon: Clock },
-                        { label: 'Approved', value: activeRequests.filter(r => r.status === 'Approved').length, icon: CheckCircle2 },
-                        { label: 'Returned', value: activeRequests.filter(r => r.status === 'Returned').length, icon: RotateCcw },
-                        { label: 'My Listings', value: myListings.length, icon: Package },
+                        { label: 'My Rentals',    value: myRentals.length,                                         icon: Clock },
+                        { label: 'Approved',      value: myRentals.filter(r => r.status === 'approved').length,    icon: CheckCircle2 },
+                        { label: 'Pending Asks',  value: sellerRentals.filter(r => r.status === 'pending').length, icon: Store },
+                        { label: 'All Products',  value: myListings.length,                                        icon: Package },
                     ].map(({ label, value, icon: Icon }) => (
                         <div key={label} className="glass-card rounded-2xl p-5">
                             <Icon size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
@@ -104,23 +242,19 @@ export default function Dashboard() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-1 glass rounded-2xl p-1 w-fit mb-8">
+                <div className="flex gap-1 glass rounded-2xl p-1 w-fit mb-8 overflow-x-auto">
                     {TABS.map(({ id, label, icon: Icon, count }) => (
-                        <button
-                            key={id}
-                            onClick={() => setActiveTab(id)}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === id
+                        <button key={id} onClick={() => setActiveTab(id)}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === id
                                 ? 'bg-[#000501] text-[#ade1e5] dark:bg-[#99d19c] dark:text-[#000501] shadow-sm'
                                 : 'text-[#73ab84] dark:text-[#79c7c5] hover:bg-[#73ab84]/10 dark:hover:bg-[#79c7c5]/10'
-                                }`}
-                        >
+                                }`}>
                             <Icon size={15} />
                             {label}
                             {count > 0 && (
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${activeTab === id
-                                    ? 'bg-white/20 text-inherit'
-                                    : 'bg-[#99d19c]/25 text-[#3d6b50] dark:bg-[#79c7c5]/15 dark:text-[#79c7c5]'
-                                    }`}>
+                                    ? 'bg-white/20'
+                                    : 'bg-[#99d19c]/25 text-[#3d6b50] dark:bg-[#79c7c5]/15 dark:text-[#79c7c5]'}`}>
                                     {count}
                                 </span>
                             )}
@@ -128,60 +262,89 @@ export default function Dashboard() {
                     ))}
                 </div>
 
-                {/* Tab content */}
+                {/* ── My Rentals tab ── */}
                 {activeTab === 'requests' && (
                     <div>
-                        {activeRequests.length === 0 ? (
-                            <EmptyState
-                                icon={Clock}
-                                title="No active requests"
-                                description="You haven't requested to borrow anything yet. Start by browsing available items near you."
-                                action={
-                                    <Button variant="primary" onClick={() => navigate('/browse')}>
-                                        Browse Items <ArrowRight size={15} />
-                                    </Button>
-                                }
-                            />
+                        {myRentals.length === 0 ? (
+                            <EmptyState icon={Clock} title="No rentals yet"
+                                description="You haven't rented anything yet. Start browsing!"
+                                action={<Button variant="primary" onClick={() => window.location.href = '/browse'}>Browse Items <ArrowRight size={15} /></Button>} />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {activeRequests.map(req => (
-                                    <RequestCard key={req.id} req={req} />
-                                ))}
+                                {myRentals.map(req => <RequestCard key={req._id} req={req} />)}
                             </div>
                         )}
                     </div>
                 )}
 
+                {/* ── Seller Incoming Requests tab ── */}
+                {activeTab === 'seller' && (
+                    <div>
+                        {sellerRentals.length === 0 ? (
+                            <EmptyState icon={Store} title="No incoming requests"
+                                description="When someone requests to rent one of your items, you'll see it here."
+                                action={<Button variant="primary" onClick={() => setShowListModal(true)}><Plus size={15} /> List an Item</Button>} />
+                        ) : (
+                            <div className="space-y-4">
+                                <p className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5]">
+                                    {sellerRentals.filter(r => r.status === 'pending').length} pending · {sellerRentals.length} total
+                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {sellerRentals.map(req => (
+                                        <SellerRequestCard key={req._id} req={req} onStatusUpdate={handleStatusUpdate} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── All Products tab ── */}
                 {activeTab === 'listings' && (
                     <div>
                         {myListings.length === 0 ? (
-                            <EmptyState
-                                icon={Package}
-                                title="No listings yet"
+                            <EmptyState icon={Package} title="No listings yet"
                                 description="List items you own to earn money when your neighbours need them."
-                                action={
-                                    <Button variant="primary">
-                                        <Plus size={15} /> List an Item
-                                    </Button>
-                                }
-                            />
+                                action={<Button variant="primary" onClick={() => setShowListModal(true)}><Plus size={15} /> List an Item</Button>} />
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                 {myListings.map(item => (
-                                    <Link key={item.id} to={`/item/${item.id}`}>
-                                        <div className="glass-card rounded-2xl overflow-hidden card-hover">
-                                            <div className="h-36 overflow-hidden">
-                                                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                                    <div key={item._id} className="glass-card rounded-2xl overflow-hidden card-hover relative group">
+                                        <Link to={`/item/${item._id}`}>
+                                            <div className="h-36 overflow-hidden bg-[#99d19c]/20 dark:bg-[#79c7c5]/10 flex items-center justify-center">
+                                                {item.images?.[0]
+                                                    ? <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
+                                                    : <Package size={40} className="text-[#73ab84] dark:text-[#79c7c5] opacity-40" />}
                                             </div>
                                             <div className="p-4">
                                                 <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1">{item.title}</h3>
                                                 <div className="flex items-center justify-between mt-2">
                                                     <span className="text-xs font-medium text-[#73ab84] dark:text-[#79c7c5]">₹{item.pricePerDay}/day</span>
-                                                    <Badge variant="success">Active</Badge>
+                                                    <Badge variant={item.availability ? 'success' : 'pending'}>
+                                                        {item.availability ? 'Active' : 'Unavailable'}
+                                                    </Badge>
                                                 </div>
+                                                {item.aiInsights?.rentalValueScore && (
+                                                    <p className="text-xs text-brand-teal dark:text-brand-aqua mt-1 font-semibold">
+                                                        🤖 AI Score: {item.aiInsights.rentalValueScore}/10
+                                                    </p>
+                                                )}
                                             </div>
+                                        </Link>
+                                        {/* Edit / Delete overlay */}
+                                        <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Link to={`/item/${item._id}`}
+                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#000501]/80 text-[#73ab84] hover:text-brand-teal dark:text-[#79c7c5] dark:hover:text-brand-green shadow-sm backdrop-blur-sm"
+                                                title="View / Edit">
+                                                <Pencil size={13} />
+                                            </Link>
+                                            <button onClick={() => handleDeleteListing(item._id)} disabled={deletingId === item._id}
+                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#000501]/80 text-red-400 hover:text-red-600 shadow-sm backdrop-blur-sm disabled:opacity-50"
+                                                title="Delete listing">
+                                                {deletingId === item._id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                                            </button>
                                         </div>
-                                    </Link>
+                                    </div>
                                 ))}
                             </div>
                         )}
@@ -189,6 +352,13 @@ export default function Dashboard() {
                 )}
 
             </Container>
+
+            {showListModal && (
+                <ListItemModal
+                    onClose={() => setShowListModal(false)}
+                    onSuccess={() => { console.log('🆕 [Dashboard] New listing — refreshing'); loadData(); }}
+                />
+            )}
         </div>
     );
 }

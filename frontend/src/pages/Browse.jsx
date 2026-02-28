@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
-import { fetchItems } from '../api/services.js';
+import api from '../api/axios.js';
 import { CATEGORIES } from '../api/placeholder.js';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { LoadingGrid, EmptyState, ErrorState } from '../components/items/ItemStates.jsx';
@@ -15,28 +15,49 @@ export default function Browse() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [userCoords, setUserCoords] = useState(null); // { lat, lng }
 
     const [search, setSearch] = useState(searchParams.get('search') || '');
     const [category, setCategory] = useState(searchParams.get('category') || 'All');
     const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
 
+    // Auto-detect user location once
+    useEffect(() => {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                setUserCoords(coords);
+                console.log('📍 [Browse] User location detected:', coords);
+            },
+            err => console.warn('⚠️ [Browse] Location denied:', err.message),
+            { timeout: 8000 }
+        );
+    }, []);
+
     const loadItems = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const filters = {};
-            if (search) filters.search = search;
-            if (category !== 'All') filters.category = category;
-            if (maxPrice) filters.maxPrice = Number(maxPrice);
+            const params = {};
+            if (search) params.search = search;
+            if (category !== 'All') params.category = category;
+            if (maxPrice) params.maxPrice = Number(maxPrice);
+            if (userCoords) { params.userLat = userCoords.lat; params.userLng = userCoords.lng; }
 
-            const data = await fetchItems(filters);
-            setItems(data.items || data);
+            console.log('🔍 [Browse] Fetching products with filters:', params);
+            const res = await api.get('/products', { params });
+            const items = res.data.products || [];
+            console.log(`✅ [Browse] Loaded ${items.length} products from backend`);
+            setItems(items);
         } catch {
+            console.error('❌ [Browse] Failed to fetch products');
             setError('Could not load items. Please try again.');
         } finally {
             setLoading(false);
         }
-    }, [search, category, maxPrice]);
+    }, [search, category, maxPrice, userCoords]);
+
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -158,7 +179,7 @@ export default function Browse() {
                 {!loading && !error && items.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {items.map(item => (
-                            <ItemCard key={item.id} item={item} />
+                            <ItemCard key={item._id || item.id} item={item} />
                         ))}
                     </div>
                 )}

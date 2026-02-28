@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    MapPin, Star, IndianRupee, Calendar, User, ArrowLeft, CheckCircle2, XCircle, ImageOff,
+    MapPin, Star, IndianRupee, Calendar, User, ArrowLeft, CheckCircle2, XCircle, ImageOff, Package,
 } from 'lucide-react';
-import { fetchItemById } from '../api/services.js';
-import { useRental } from '../context/RentalContext.jsx';
+import { useAuth } from '@clerk/clerk-react';
+import api, { withToken } from '../api/axios.js';
 import Modal from '../components/ui/Modal.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
 import Container from '../components/layout/Container.jsx';
 import { ErrorState } from '../components/items/ItemStates.jsx';
+
+const MapView = lazy(() => import('../components/MapView.jsx'));
 
 function DetailSkeleton() {
     return (
@@ -32,7 +34,7 @@ function DetailSkeleton() {
 export default function ItemDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { addRequest } = useRental();
+    const { getToken, isSignedIn } = useAuth();
 
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -40,6 +42,7 @@ export default function ItemDetails() {
     const [modalOpen, setModalOpen] = useState(false);
     const [confirming, setConfirming] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
+    const [rentalError, setRentalError] = useState('');
 
     const today = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -48,10 +51,25 @@ export default function ItemDetails() {
     const [imgError, setImgError] = useState(false);
 
     useEffect(() => {
-        fetchItemById(id)
-            .then(data => { setItem(data); setLoading(false); })
-            .catch(() => { setError('Item not found or unavailable.'); setLoading(false); });
+        console.log(`🔍 [ItemDetails] Fetching product: ${id}`);
+        api.get(`/products/${id}`)
+            .then(res => {
+                console.log('✅ [ItemDetails] Product loaded:', res.data.product?.title);
+                setItem(res.data.product);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('❌ [ItemDetails] Failed to load product:', err.message);
+                setError('Item not found or unavailable.');
+                setLoading(false);
+            });
     }, [id]);
+
+    // Derive fields from MongoDB product
+    const imgSrc = item?.images?.[0] || null;
+    const isAvailable = item?.availability ?? true;
+    const ownerName = item?.owner?.name || 'RentiGO Seller';
+    const ownerEmail = item?.owner?.email || '';
 
     if (loading) return <DetailSkeleton />;
     if (error || !item) return (
@@ -61,18 +79,36 @@ export default function ItemDetails() {
     );
 
     const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
-    const totalPrice = days * item.pricePerDay;
+    const totalPrice = days * (item?.pricePerDay || 0);
 
     const handleConfirm = async () => {
         setConfirming(true);
-        await new Promise(res => setTimeout(res, 900));
-        addRequest(item, { startDate, endDate });
-        setConfirming(false);
-        setConfirmed(true);
-        setTimeout(() => {
-            setModalOpen(false);
-            navigate('/dashboard');
-        }, 1400);
+        setRentalError('');
+        console.log(`🛒 [ItemDetails] Submitting rental for product: ${item._id}`);
+        try {
+            const token = await getToken();
+            const res = await api.post('/rentals', {
+                productId: item._id,
+                startDate,
+                endDate,
+            }, withToken(token));
+            console.log('✅ [ItemDetails] Rental created:', res.data.rental?._id);
+            setConfirmed(true);
+            setTimeout(() => {
+                setModalOpen(false);
+                navigate('/dashboard');
+            }, 1400);
+        } catch (err) {
+            const msg = err.response?.data?.error || err.message;
+            console.error('❌ [ItemDetails] Rental failed:', msg);
+            if (err.response?.status === 401) {
+                setRentalError('Please sign in to rent this item.');
+            } else {
+                setRentalError(msg);
+            }
+        } finally {
+            setConfirming(false);
+        }
     };
 
     return (
@@ -96,14 +132,14 @@ export default function ItemDetails() {
                     {/* Image */}
                     <div className="relative">
                         <div className="aspect-[4/3] rounded-3xl overflow-hidden glass-card shadow-2xl bg-gradient-to-br from-[#99d19c]/30 to-[#79c7c5]/20 dark:from-[#99d19c]/10 dark:to-[#79c7c5]/8">
-                            {imgError ? (
+                            {imgError || !imgSrc ? (
                                 <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-[#73ab84] dark:text-[#79c7c5]">
-                                    <ImageOff size={48} className="opacity-30" />
+                                    <Package size={64} className="opacity-20" />
                                     <span className="text-sm font-semibold opacity-50">{item.category}</span>
                                 </div>
                             ) : (
                                 <img
-                                    src={item.image}
+                                    src={imgSrc}
                                     alt={item.title}
                                     className="w-full h-full object-cover"
                                     onError={() => setImgError(true)}
@@ -125,8 +161,8 @@ export default function ItemDetails() {
                             <h1 className="text-3xl font-black text-[#000501] dark:text-[#ade1e5] leading-tight">
                                 {item.title}
                             </h1>
-                            <Badge variant={item.available ? 'approved' : 'error'} className="shrink-0 mt-1">
-                                {item.available ? (
+                            <Badge variant={isAvailable ? 'approved' : 'error'} className="shrink-0 mt-1">
+                                {isAvailable ? (
                                     <><CheckCircle2 size={12} /> Available</>
                                 ) : (
                                     <><XCircle size={12} /> Unavailable</>
@@ -136,13 +172,17 @@ export default function ItemDetails() {
 
                         {/* Location + rating */}
                         <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-[#73ab84] dark:text-[#79c7c5]">
+                            {item.location?.address && (
                             <div className="flex items-center gap-1.5 font-medium">
-                                <MapPin size={15} /> {item.location} · {item.distance} km away
+                                <MapPin size={15} /> {item.location.address}
                             </div>
+                            )}
+                            {item.rating && (
                             <div className="flex items-center gap-1.5 font-semibold">
                                 <Star size={15} className="fill-[#73ab84] dark:fill-[#79c7c5]" />
-                                {item.rating} ({item.reviewCount} reviews)
+                                {item.rating}
                             </div>
+                            )}
                         </div>
 
                         {/* Price */}
@@ -154,9 +194,14 @@ export default function ItemDetails() {
                                 </span>
                                 <span className="text-lg text-[#73ab84] dark:text-[#79c7c5] font-semibold">/ day</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-xs text-[#73ab84] dark:text-[#79c7c5]">
+                            {item.securityDeposit > 0 && (
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 mt-1">
+                                🛡️ Security deposit: ₹{item.securityDeposit.toLocaleString('en-IN')} (refundable)
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-xs text-[#73ab84] dark:text-[#79c7c5] mt-1">
                                 <Calendar size={13} />
-                                Available: {item.availableFrom} to {item.availableTo}
+                                Listed {new Date(item.createdAt).toLocaleDateString()}
                             </div>
                         </div>
 
@@ -167,16 +212,14 @@ export default function ItemDetails() {
 
                         {/* Owner card */}
                         <div className="flex items-center gap-3 glass-card rounded-2xl p-4 mb-8">
-                            <img
-                                src={item.ownerAvatar}
-                                alt={item.ownerName}
-                                className="w-12 h-12 rounded-xl object-cover border-2 border-[#99d19c]/40 dark:border-[#79c7c5]/20"
-                            />
+                            <div className="w-12 h-12 rounded-xl bg-[#99d19c]/20 dark:bg-[#79c7c5]/10 flex items-center justify-center border-2 border-[#99d19c]/40 dark:border-[#79c7c5]/20">
+                                <User size={20} className="text-[#73ab84] dark:text-[#79c7c5]" />
+                            </div>
                             <div>
                                 <div className="flex items-center gap-1.5 text-sm font-semibold text-[#000501] dark:text-[#ade1e5]">
-                                    <User size={13} /> {item.ownerName}
+                                    <User size={13} /> {ownerName}
                                 </div>
-                                <div className="text-xs text-[#73ab84] dark:text-[#79c7c5] mt-0.5">Verified owner · Member since 2024</div>
+                                <div className="text-xs text-[#73ab84] dark:text-[#79c7c5] mt-0.5">Verified owner · {ownerEmail || 'RentiGO member'}</div>
                             </div>
                         </div>
 
@@ -184,14 +227,37 @@ export default function ItemDetails() {
                         <Button
                             variant="primary"
                             size="lg"
-                            onClick={() => setModalOpen(true)}
-                            disabled={!item.available}
+                            onClick={() => {
+                                if (!isSignedIn) { navigate('/login'); return; }
+                                setModalOpen(true);
+                            }}
+                            disabled={!isAvailable}
                             className="w-full"
                         >
-                            {item.available ? 'Request to Borrow' : 'Currently Unavailable'}
+                            {isAvailable
+                                ? isSignedIn ? 'Request to Borrow' : 'Sign In to Rent'
+                                : 'Currently Unavailable'}
                         </Button>
                     </div>
                 </div>
+
+                {/* Map — full width below two-column grid */}
+                {item.location?.lat && item.location?.lng && (
+                    <div className="mt-10">
+                        <h2 className="text-lg font-black text-brand-dark dark:text-brand-frost mb-3 flex items-center gap-2">
+                            <MapPin size={18} className="text-brand-teal dark:text-brand-green" /> Item Location
+                        </h2>
+                        <Suspense fallback={<div className="h-72 rounded-2xl bg-[#99d19c]/10 animate-pulse" />}>
+                            <MapView lat={item.location.lat} lng={item.location.lng} title={item.title} height="320px" />
+                        </Suspense>
+                        {item.location.address && (
+                            <p className="text-xs text-[#73ab84] dark:text-[#79c7c5] mt-2 flex items-center gap-1">
+                                <MapPin size={11} /> {item.location.address}
+                            </p>
+                        )}
+                    </div>
+                )}
+
             </Container>
 
             {/* Request Modal */}
@@ -208,10 +274,13 @@ export default function ItemDetails() {
                     <>
                         {/* Item summary */}
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-[#99d19c]/12 dark:bg-[#73ab84]/8 mb-5">
-                            <img src={item.image} alt={item.title} className="w-14 h-14 rounded-xl object-cover" />
+                            {imgSrc
+                                ? <img src={imgSrc} alt={item.title} className="w-14 h-14 rounded-xl object-cover" />
+                                : <div className="w-14 h-14 rounded-xl bg-[#99d19c]/20 flex items-center justify-center"><Package size={24} className="text-[#73ab84] opacity-50" /></div>
+                            }
                             <div>
                                 <div className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm">{item.title}</div>
-                                <div className="text-xs text-[#73ab84] dark:text-[#79c7c5]">by {item.ownerName}</div>
+                                <div className="text-xs text-[#73ab84] dark:text-[#79c7c5]">by {ownerName}</div>
                             </div>
                         </div>
 
@@ -253,6 +322,9 @@ export default function ItemDetails() {
                         </div>
 
                         {/* Actions */}
+                        {rentalError && (
+                            <p className="text-xs text-red-500 font-semibold bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-xl mb-4">{rentalError}</p>
+                        )}
                         <div className="flex gap-3">
                             <Button variant="outline" size="md" className="flex-1" onClick={() => setModalOpen(false)} disabled={confirming}>
                                 Cancel

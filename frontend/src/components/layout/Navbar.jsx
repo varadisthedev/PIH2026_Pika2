@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Menu, X, MapPin, LayoutDashboard, LogIn, Package } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Sun, Moon, Menu, X, MapPin, LayoutDashboard, Package } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext.jsx';
-import Button from '../ui/Button.jsx';
+import { useAuth, useUser, UserButton, SignInButton } from '@clerk/clerk-react';
 
-const NAV_LINKS = [
+const PUBLIC_NAV = [
     { label: 'Browse', to: '/browse', icon: Package },
+];
+const AUTH_NAV = [
     { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
 ];
 
@@ -14,7 +16,15 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const location = useLocation();
-    const navigate = useNavigate();
+    const { isSignedIn, isLoaded } = useAuth();
+    const { user } = useUser();
+
+    // Log auth state whenever it changes
+    useEffect(() => {
+        if (isLoaded) {
+            console.log(`🔐 [Navbar] isSignedIn: ${isSignedIn} | user: ${user?.primaryEmailAddress?.emailAddress ?? 'guest'}`);
+        }
+    }, [isLoaded, isSignedIn, user]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 12);
@@ -50,7 +60,7 @@ export default function Navbar() {
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-2">
-                        {NAV_LINKS.map(({ label, to, icon: Icon }) => (
+                        {[...PUBLIC_NAV, ...(isSignedIn ? AUTH_NAV : [])].map(({ label, to, icon: Icon }) => (
                             <Link
                                 key={to}
                                 to={to}
@@ -76,17 +86,22 @@ export default function Navbar() {
                             {isDark ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
 
-                        {/* Login – desktop only */}
-                        <div className="hidden md:block">
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => navigate('/login')}
-                                className="!rounded-2xl"
-                            >
-                                <LogIn size={16} />
-                                Login
-                            </Button>
+                        {/* Auth – desktop only */}
+                        <div className="hidden md:flex items-center">
+                            {!isLoaded ? (
+                                <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse" />
+                            ) : isSignedIn ? (
+                                <UserButton afterSignOutUrl="/" />
+                            ) : (
+                                <SignInButton mode="modal">
+                                    <button
+                                        className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark hover:scale-105 transition-transform"
+                                        onClick={() => console.log('🔐 [Navbar] Sign In clicked')}
+                                    >
+                                        Sign In
+                                    </button>
+                                </SignInButton>
+                            )}
                         </div>
 
                         {/* Mobile menu toggle */}
@@ -105,7 +120,7 @@ export default function Navbar() {
             {mobileOpen && (
                 <div className="md:hidden glass-nav border-t border-[#99d19c]/20 dark:border-[#79c7c5]/10 px-4 pb-4 pt-2 animate-fade-up">
                     <nav className="flex flex-col gap-1">
-                        {NAV_LINKS.map(({ label, to, icon: Icon }) => (
+                        {[...PUBLIC_NAV, ...(isSignedIn ? AUTH_NAV : [])].map(({ label, to, icon: Icon }) => (
                             <Link
                                 key={to}
                                 to={to}
@@ -117,14 +132,22 @@ export default function Navbar() {
                                 <Icon size={16} /> {label}
                             </Link>
                         ))}
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            className="mt-2 w-full"
-                            onClick={() => navigate('/login')}
-                        >
-                            <LogIn size={15} /> Login
-                        </Button>
+                        <div className="mt-2 flex justify-center">
+                            {!isLoaded ? (
+                                <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse" />
+                            ) : isSignedIn ? (
+                                <UserButton afterSignOutUrl="/" />
+                            ) : (
+                                <SignInButton mode="modal">
+                                    <button
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark"
+                                        onClick={() => console.log('🔐 [Navbar Mobile] Sign In clicked')}
+                                    >
+                                        Sign In
+                                    </button>
+                                </SignInButton>
+                            )}
+                        </div>
                     </nav>
                 </div>
             )}

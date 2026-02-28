@@ -1,23 +1,21 @@
 import React from 'react';
-import { SignIn, useAuth } from '@clerk/clerk-react';
+import { SignUp, useAuth } from '@clerk/clerk-react';
 import { Navigate } from 'react-router-dom';
 import { MapPin } from 'lucide-react';
 
-export default function Login() {
+export default function SignUpPage() {
   const { isSignedIn, isLoaded } = useAuth();
 
   // Already signed in → redirect to dashboard
   if (isLoaded && isSignedIn) {
-    console.log('✅ [Login] User already signed in — redirecting to /dashboard');
+    console.log('✅ [SignUp] User already signed in — redirecting to /dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
-  console.log('🔐 [Login] Rendering Clerk SignIn page');
+  console.log('📝 [SignUp] Rendering Clerk SignUp page');
 
   return (
     <div className="hero-bg min-h-screen flex flex-col items-center justify-center px-4 py-16 gap-8">
-
-      {/* RentiGO logo */}
       <div className="text-center animate-fade-up">
         <div className="inline-flex items-center gap-2.5 mb-3">
           <div className="w-12 h-12 rounded-2xl bg-brand-dark dark:bg-brand-green flex items-center justify-center shadow-lg">
@@ -28,15 +26,14 @@ export default function Login() {
           </span>
         </div>
         <p className="text-sm font-bold tracking-wide uppercase text-brand-teal dark:text-brand-aqua/80">
-          Your neighbourhood rental marketplace
+          Join your neighbourhood rental marketplace
         </p>
       </div>
 
-      {/* Clerk SignIn widget */}
-      <SignIn
+      <SignUp
         routing="hash"
         fallbackRedirectUrl="/dashboard"
-        signUpUrl="/sign-up"
+        signInUrl="/login"
       />
     </div>
   );
