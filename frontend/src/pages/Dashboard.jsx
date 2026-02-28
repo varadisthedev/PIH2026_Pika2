@@ -11,6 +11,7 @@ import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
 import { EmptyState } from '../components/items/ItemStates.jsx';
 import ListItemModal from '../components/ListItemModal.jsx';
+import { useRental } from '../context/RentalContext.jsx';
 
 const STATUS_ICON = {
     pending:   <Clock size={14} />,
@@ -192,12 +193,24 @@ export default function Dashboard() {
             setDeletingId(null);
         }
     };
+    const { userRole } = useRental(); // 'renter' or 'lender'
 
-    const TABS = [
-        { id: 'requests',       label: 'My Rentals',        icon: Clock,  count: myRentals.length },
-        { id: 'seller',         label: 'Incoming Requests', icon: Store,  count: sellerRentals.filter(r => r.status === 'pending').length },
-        { id: 'listings',       label: 'All Products',      icon: Package, count: myListings.length },
+    const RENTER_TABS = [
+        { id: 'requests', label: 'My Rentals', icon: Clock, count: myRentals.length },
     ];
+
+    const LENDER_TABS = [
+        { id: 'seller', label: 'Incoming Requests', icon: Store, count: sellerRentals.filter(r => r.status === 'pending').length },
+        { id: 'listings', label: 'All Products', icon: Package, count: myListings.length },
+    ];
+
+    const TABS = userRole === 'renter' ? RENTER_TABS : LENDER_TABS;
+
+    // Force active tab to match role if it's pointing to a tab that doesn't exist in current role
+    useEffect(() => {
+        if (userRole === 'renter' && activeTab !== 'requests') setActiveTab('requests');
+        if (userRole === 'lender' && activeTab === 'requests') setActiveTab('seller');
+    }, [userRole]);
 
     if (!isLoaded || loading) {
         return (
@@ -208,39 +221,58 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="pb-24 animate-fade-in">
+        <div className="pb-24 animate-fade-in pt-6">
             <Container>
 
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
                     <div className="animate-fade-up">
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-teal dark:text-brand-aqua mb-2 opacity-80">Your space</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-brand-teal dark:text-brand-aqua mb-2 opacity-80">
+                            {userRole === 'renter' ? 'Your Borrowing Workspace' : 'Your Lending Workspace'}
+                        </p>
                         <h1 className="text-4xl sm:text-5xl font-black text-brand-dark dark:text-brand-frost flex items-center gap-4 tracking-tighter">
                             <div className="w-12 h-12 rounded-2xl bg-brand-green/20 dark:bg-brand-green/10 flex items-center justify-center">
                                 <LayoutDashboard size={28} className="text-brand-teal dark:text-brand-green" />
                             </div>
-                            Dashboard
+                            {userRole === 'renter' ? 'Renter Dashboard' : 'Lender Dashboard'}
                         </h1>
                     </div>
-                    <Button variant="primary" size="md" onClick={() => setShowListModal(true)}>
-                        <Plus size={18} /> List an Item
-                    </Button>
+                    {userRole === 'lender' && (
+                        <Button variant="primary" size="md" onClick={() => setShowListModal(true)}>
+                            <Plus size={18} /> List an Item
+                        </Button>
+                    )}
                 </div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                    {[
-                        { label: 'My Rentals',    value: myRentals.length,                                         icon: Clock },
-                        { label: 'Approved',      value: myRentals.filter(r => r.status === 'approved').length,    icon: CheckCircle2 },
-                        { label: 'Pending Asks',  value: sellerRentals.filter(r => r.status === 'pending').length, icon: Store },
-                        { label: 'All Products',  value: myListings.length,                                        icon: Package },
-                    ].map(({ label, value, icon: Icon }) => (
-                        <div key={label} className="glass-card rounded-2xl p-5">
-                            <Icon size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
-                            <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{value}</div>
-                            <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">{label}</div>
-                        </div>
-                    ))}
+                    {userRole === 'renter' ? (
+                        <>
+                            <div className="glass-card rounded-2xl p-5">
+                                <Clock size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
+                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{myRentals.length}</div>
+                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">My Rentals</div>
+                            </div>
+                            <div className="glass-card rounded-2xl p-5">
+                                <CheckCircle2 size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
+                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{myRentals.filter(r => r.status === 'approved').length}</div>
+                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">Approved</div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="glass-card rounded-2xl p-5">
+                                <Store size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
+                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{sellerRentals.filter(r => r.status === 'pending').length}</div>
+                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">Pending Asks</div>
+                            </div>
+                            <div className="glass-card rounded-2xl p-5">
+                                <Package size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
+                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{myListings.length}</div>
+                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">All Products</div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Tabs */}

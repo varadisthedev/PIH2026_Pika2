@@ -60,18 +60,20 @@ export default function MapView({
                 attributionControl={true}
             >
                 <TileLayer
+                    key="osm-tiles"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     maxZoom={19}
                 />
-                <Recenter lat={lat} lng={lng} zoom={zoom} />
-                <Marker position={[lat, lng]} icon={greenIcon}>
+                <Recenter key="recenter" lat={lat} lng={lng} zoom={zoom} />
+                <Marker key="item-marker" position={[lat, lng]} icon={greenIcon}>
                     <Popup>
                         <strong>{title}</strong>
                     </Popup>
                 </Marker>
                 {radiusKm != null && (
                     <Circle
+                        key="radius-circle"
                         center={[lat, lng]}
                         radius={radiusKm * 1000}
                         pathOptions={{

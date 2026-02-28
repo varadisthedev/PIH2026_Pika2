@@ -69,10 +69,12 @@ export default function Navbar() {
                         className="flex items-center gap-2.5 group shrink-0"
                         aria-label="RentiGO Home"
                     >
-                        <div className="w-10 h-10 rounded-2xl bg-brand-dark dark:bg-brand-green flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <MapPin size={20} className="text-brand-frost dark:text-brand-dark" />
-                        </div>
-                        <span className="text-2xl font-black tracking-tighter text-brand-dark dark:text-brand-frost hidden xs:block uppercase">
+                        <img 
+                            src="/trans.png" 
+                            alt="RentiGO Logo" 
+                            className="w-14 h-14 object-contain scale-[1.35] group-hover:scale-[1.5] transition-transform duration-300 drop-shadow-2xl ml-2" 
+                        />
+                        <span className="text-2xl font-black tracking-tighter text-brand-dark dark:text-brand-frost hidden xs:block uppercase ml-2">
                             Renti<span className="text-brand-green">GO</span>
                         </span>
                     </Link>

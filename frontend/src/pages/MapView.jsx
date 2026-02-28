@@ -1,133 +1,243 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, List, Filter, SlidersHorizontal, ArrowLeft, Star, IndianRupee, ShieldCheck } from 'lucide-react';
-import { useRental } from '../context/RentalContext.jsx';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import {
+    Search, ArrowLeft, List, MapPin, Navigation, IndianRupee,
+    SlidersHorizontal, X, Package,
+} from 'lucide-react';
 import api from '../api/axios.js';
-import Container from '../components/layout/Container.jsx';
+import { useLocation } from '../context/LocationContext.jsx';
 import Button from '../components/ui/Button.jsx';
 import Badge from '../components/ui/Badge.jsx';
-import Card from '../components/ui/Card.jsx';
 
-export default function MapView() {
+// Fix Leaflet default icon paths in Vite
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const greenIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+
+const userIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+
+// Center map when coords change
+function MapCenterer({ coords }) {
+    const map = useMapEvents({});
+    useEffect(() => {
+        if (coords) map.setView([coords.lat, coords.lng], map.getZoom());
+    }, [coords, map]);
+    return null;
+}
+
+export default function MapPage() {
     const navigate = useNavigate();
-    const { toggleWishlist, wishlist } = useRental();
+    const { coords, locationName, status: locStatus, setShowModal } = useLocation();
+
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedItem, setSelectedItem] = useState(null);
+    const [search, setSearch] = useState('');
+    const [radiusKm, setRadiusKm] = useState(6000);
+    const [showFilter, setShowFilter] = useState(false);
+    const [selected, setSelected] = useState(null);
+
+    // Default center: India
+    const defaultCenter = coords
+        ? [coords.lat, coords.lng]
+        : [20.5937, 78.9629];
+    const defaultZoom = coords ? 11 : 5;
 
     useEffect(() => {
-        api.get('/products', { params: { limit: 100 } })
-            .then(res => { setItems(res.data.products || []); setLoading(false); })
-            .catch(() => setLoading(false));
-    }, []);
+        const params = { limit: 200 };
+        if (coords) { params.userLat = coords.lat; params.userLng = coords.lng; }
+        api.get('/products', { params })
+            .then(res => {
+                let prods = res.data.products || [];
+                // Only show products with a valid location
+                prods = prods.filter(p => p.location?.lat && p.location?.lng);
+                setItems(prods);
+                console.log(`🗺️ [MapPage] ${prods.length} products with location data`);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, [coords]);
+
+    // Filtered by search + radius
+    const visible = items.filter(item => {
+        const matchSearch = !search ||
+            item.title?.toLowerCase().includes(search.toLowerCase()) ||
+            item.category?.toLowerCase().includes(search.toLowerCase());
+        const withinRadius = !coords || radiusKm >= 6000 ||
+            (item.distanceKm != null ? item.distanceKm <= radiusKm : true);
+        return matchSearch && withinRadius;
+    });
 
     return (
-        <div className="h-screen w-full flex flex-col pt-16 bg-brand-frost dark:bg-brand-dark overflow-hidden animate-fade-in">
-            {/* Map Interaction Toolbar */}
-            <div className={`absolute top-24 left-1/2 -translate-x-1/2 z-30 w-[95%] max-w-2xl px-4 py-2 rounded-[2.5rem] glass-card shadow-2xl transition-all duration-700 ${selectedItem ? 'translate-y-[-120px] opacity-0' : 'translate-y-0 opacity-100'}`}>
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="p-3 rounded-2xl bg-brand-dark dark:bg-brand-green text-brand-frost dark:text-brand-dark shadow-xl hover:scale-110 transition-transform">
-                        <ArrowLeft size={18} />
+        <div className="h-screen w-full flex flex-col overflow-hidden" style={{ paddingTop: '64px' }}>
+
+            {/* ── Toolbar ─────────────────────────────────────────────── */}
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[500] w-[95%] max-w-2xl">
+                <div className="flex items-center gap-3 glass-card rounded-3xl px-4 py-2 shadow-2xl">
+                    <button onClick={() => navigate(-1)}
+                        className="p-2.5 rounded-2xl bg-brand-dark dark:bg-brand-green text-brand-frost dark:text-brand-dark shadow-lg hover:scale-105 transition-transform shrink-0">
+                        <ArrowLeft size={16} />
                     </button>
-                    <div className="flex-1 flex items-center gap-3 px-6 py-2 rounded-2xl bg-brand-teal/5 dark:bg-brand-teal/10">
-                        <Search size={16} className="text-brand-teal/40" />
+
+                    <div className="flex-1 flex items-center gap-2">
+                        <Search size={14} className="text-[#73ab84] shrink-0" />
                         <input
-                            type="text"
-                            placeholder="Find gear nearby..."
-                            className="bg-transparent border-none outline-none text-[11px] font-black uppercase tracking-widest text-brand-dark dark:text-brand-frost placeholder:text-brand-teal/20 w-full"
+                            type="text" value={search} onChange={e => setSearch(e.target.value)}
+                            placeholder="Search items on map..."
+                            className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost placeholder:text-[#73ab84]/40 outline-none"
                         />
+                        {search && (
+                            <button onClick={() => setSearch('')} className="text-[#73ab84] hover:text-red-400">
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
-                    <Button variant="outline" size="sm" className="!rounded-2xl !hidden sm:flex" onClick={() => navigate('/browse')}>
-                        <List size={16} /> List View
+
+                    <button onClick={() => setShowFilter(f => !f)}
+                        className={`p-2.5 rounded-2xl transition-colors shrink-0 ${showFilter ? 'bg-brand-green/20 text-brand-teal dark:text-brand-green' : 'text-[#73ab84] hover:bg-[#73ab84]/10'}`}>
+                        <SlidersHorizontal size={16} />
+                    </button>
+
+                    <Button variant="outline" size="sm" className="!rounded-2xl hidden sm:flex shrink-0" onClick={() => navigate('/browse')}>
+                        <List size={14} /> List
                     </Button>
                 </div>
-            </div>
 
-            {/* Map Mock Background */}
-            <div className="flex-1 relative bg-[#edf2f7] dark:bg-brand-dark/20 flex items-center justify-center p-4">
-                {/* Simulated Map Grid */}
-                <div className="absolute inset-0 opacity-20 dark:opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #73ab84 0.5px, transparent 0.5px)', backgroundSize: '32px 32px' }} />
-
-                {/* Floating Map Pins */}
-                {!loading && items.map((item, i) => (
-                    <button
-                        key={item.id}
-                        onClick={() => setSelectedItem(item)}
-                        className={`absolute p-1.5 rounded-full shadow-2xl border-4 border-white dark:border-brand-dark transition-all duration-500 hover:scale-125 z-10 ${selectedItem?.id === item.id ? 'bg-brand-green scale-150 z-20 shadow-brand-green/40' : 'bg-brand-dark dark:bg-brand-green/20'}`}
-                        style={{
-                            left: `${20 + (i * 15) % 65}%`,
-                            top: `${25 + (i * 20) % 55}%`,
-                            animation: `float ${3 + i}s ease-in-out infinite`
-                        }}
-                    >
-                        <MapPin size={24} className={selectedItem?.id === item.id ? 'text-brand-dark' : 'text-brand-green'} />
-                        {selectedItem?.id === item.id && (
-                            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 bg-brand-dark text-white text-[8px] font-black uppercase rounded-full shadow-xl">
-                                ₹{item.pricePerDay}
-                            </div>
-                        )}
-                    </button>
-                ))}
-
-                {/* Map Interface Controls */}
-                <div className="absolute right-8 bottom-32 flex flex-col gap-3">
-                    <button className="w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-brand-teal shadow-xl hover:bg-brand-teal/5"><MapPin size={20} /></button>
-                    <button className="w-12 h-12 rounded-2xl glass-card flex items-center justify-center text-brand-teal shadow-xl hover:bg-brand-teal/5"><SlidersHorizontal size={20} /></button>
-                </div>
-            </div>
-
-            {/* Selected Listing Card (Slides in from bottom) */}
-            <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-xl transition-all duration-700 ease-out ${selectedItem ? 'translate-y-0' : 'translate-y-[200%] opacity-0'}`}>
-                {selectedItem && (
-                    <Card variant="glass" className="!p-8 !rounded-[3rem] shadow-[0_32px_80px_rgba(0,0,0,0.3)] border-brand-green/20">
-                        <div className="flex flex-col sm:flex-row gap-8 items-start relative">
-                            <button onClick={() => setSelectedItem(null)} className="absolute -top-4 -right-4 p-2.5 rounded-2xl glass-card bg-white shadow-xl text-brand-teal hover:scale-110 transition-transform">
-                                <ArrowLeft className="rotate-90 sm:rotate-0" size={16} />
-                            </button>
-
-                            <div className="w-full sm:w-44 aspect-square rounded-[2rem] overflow-hidden glass-card shadow-2xl shrink-0 group">
-                                <img src={selectedItem.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                            </div>
-
-                            <div className="flex-1 space-y-6">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Badge variant="info" className="!text-[9px] px-2 py-0.5 uppercase tracking-widest font-black">{selectedItem.category}</Badge>
-                                        <Badge variant="approved" className="!text-[9px] px-2 py-1 font-black uppercase tracking-widest leading-none">Verified</Badge>
-                                    </div>
-                                    <h3 className="text-2xl font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter leading-none mb-1">{selectedItem.title}</h3>
-                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-brand-teal/40 uppercase tracking-widest">
-                                        <MapPin size={12} className="text-brand-green" /> {selectedItem.location} · {selectedItem.distance}km
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-6 border-t border-brand-teal/5">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-brand-teal/40 uppercase tracking-widest mb-1">Daily Rate</span>
-                                        <span className="text-2xl font-black text-brand-dark dark:text-brand-frost">₹{selectedItem.pricePerDay}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Star size={18} className="fill-brand-green text-brand-green" />
-                                        <span className="text-lg font-black text-brand-dark dark:text-brand-frost">{selectedItem.rating}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-4 pt-2">
-                                    <Button variant="primary" size="lg" className="flex-1 !rounded-[2rem] shadow-xl shadow-brand-green/20" onClick={() => navigate(`/item/${selectedItem.id}`)}>
-                                        View Details <ArrowRight size={18} className="ml-2" />
-                                    </Button>
-                                </div>
-                            </div>
+                {/* Radius filter panel */}
+                {showFilter && (
+                    <div className="mt-2 glass-card rounded-2xl p-5 shadow-xl">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-[#73ab84] uppercase tracking-wider">Search Radius</span>
+                            <span className="text-sm font-black text-brand-dark dark:text-brand-frost">
+                                {radiusKm >= 6000 ? '🇮🇳 All India' : `${radiusKm.toLocaleString()} km`}
+                            </span>
                         </div>
-                    </Card>
+                        <input
+                            type="range" min="1" max="6000" step="50" value={radiusKm}
+                            onChange={e => setRadiusKm(Number(e.target.value))}
+                            className="w-full h-1.5 bg-[#99d19c]/20 rounded-lg appearance-none cursor-pointer accent-brand-green"
+                        />
+                        <div className="flex justify-between text-[9px] font-bold text-[#73ab84]/50 mt-1 uppercase tracking-widest">
+                            <span>1 km</span><span>All India</span>
+                        </div>
+                        {locStatus !== 'granted' && (
+                            <button onClick={() => setShowModal(true)}
+                                className="mt-3 w-full text-xs font-bold text-brand-teal dark:text-brand-green flex items-center justify-center gap-1.5 py-2 rounded-xl border border-[#99d19c]/30 hover:bg-[#73ab84]/10 transition-colors">
+                                <Navigation size={12} /> Enable location for accurate radius
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
 
-            {/* Mobile View Toggle */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 lg:hidden px-8">
-                <Button variant="outline" size="lg" className="!rounded-full px-12 shadow-2xl backdrop-blur-3xl bg-white/80 dark:bg-brand-dark/80" onClick={() => navigate('/browse')}>
-                    <List size={20} /> Show List View
-                </Button>
+            {/* ── Leaflet Map ──────────────────────────────────────────── */}
+            <div className="flex-1 relative z-0">
+                <MapContainer
+                    center={defaultCenter}
+                    zoom={defaultZoom}
+                    style={{ height: '100%', width: '100%' }}
+                    scrollWheelZoom={true}
+                    attributionControl={true}
+                    zoomControl={true}
+                >
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        maxZoom={19}
+                    />
+                    {coords && <MapCenterer coords={coords} />}
+
+                    {/* User location marker */}
+                    {coords && (
+                        <Marker position={[coords.lat, coords.lng]} icon={userIcon}>
+                            <Popup>
+                                <strong>📍 Your location</strong>
+                                {locationName && <><br /><span style={{ fontSize: '11px', color: '#555' }}>{locationName}</span></>}
+                            </Popup>
+                        </Marker>
+                    )}
+
+                    {/* Radius circle */}
+                    {coords && radiusKm < 6000 && (
+                        <Circle
+                            center={[coords.lat, coords.lng]}
+                            radius={radiusKm * 1000}
+                            pathOptions={{ color: '#73ab84', fillColor: '#99d19c', fillOpacity: 0.1, weight: 2, dashArray: '6 4' }}
+                        />
+                    )}
+
+                    {/* Item markers */}
+                    {visible.map(item => (
+                        <Marker
+                            key={item._id}
+                            position={[item.location.lat, item.location.lng]}
+                            icon={greenIcon}
+                            eventHandlers={{ click: () => setSelected(item) }}
+                        >
+                            <Popup>
+                                <div style={{ minWidth: '160px' }}>
+                                    <strong style={{ fontSize: '13px' }}>{item.title}</strong><br />
+                                    <span style={{ fontSize: '11px', color: '#73ab84' }}>₹{item.pricePerDay}/day</span>
+                                    {item.distanceKm != null && (
+                                        <><br /><span style={{ fontSize: '10px', color: '#999' }}>📍 {item.distanceKm} km away</span></>
+                                    )}
+                                    <br />
+                                    <a
+                                        href={`/item/${item._id}`}
+                                        style={{ fontSize: '11px', color: '#3d6b50', fontWeight: 'bold', marginTop: '4px', display: 'inline-block' }}
+                                    >
+                                        View Details →
+                                    </a>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    ))}
+                </MapContainer>
+
+                {/* Loading overlay */}
+                {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 z-10">
+                        <div className="glass-card rounded-2xl px-6 py-4 text-sm font-bold text-brand-dark dark:text-brand-frost flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-brand-teal border-t-transparent rounded-full animate-spin" />
+                            Loading items…
+                        </div>
+                    </div>
+                )}
+
+                {/* No location banner */}
+                {!coords && !loading && (
+                    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[400]">
+                        <button onClick={() => setShowModal(true)}
+                            className="glass-card rounded-2xl px-5 py-3 shadow-xl text-xs font-bold text-brand-teal dark:text-brand-green flex items-center gap-2 hover:scale-105 transition-transform">
+                            <Navigation size={14} /> Enable location to see items near you
+                        </button>
+                    </div>
+                )}
+
+                {/* Counter badge */}
+                {!loading && (
+                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[400]">
+                        <div className="glass-card rounded-full px-5 py-2 shadow-xl text-xs font-black text-brand-dark dark:text-brand-frost flex items-center gap-2">
+                            <Package size={12} />
+                            {visible.length} item{visible.length !== 1 ? 's' : ''} on map
+                            {coords && radiusKm < 6000 && <span className="text-brand-teal dark:text-brand-green"> · within {radiusKm} km</span>}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

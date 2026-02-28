@@ -13,6 +13,7 @@ import Button from '../components/ui/Button.jsx';
 import Container from '../components/layout/Container.jsx';
 import Card from '../components/ui/Card.jsx';
 import ItemCard from '../components/items/ItemCard.jsx';
+import { useAuth } from '@clerk/clerk-react';
 import { LoadingGrid, EmptyState, ErrorState } from '../components/items/ItemStates.jsx';
 
 const MapView = lazy(() => import('../components/MapView.jsx'));
@@ -38,7 +39,7 @@ export default function ItemDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addBooking, wishlist, toggleWishlist, addToRecentlyViewed, addNotification } = useRental();
-
+    const { getToken, isSignedIn } = useAuth();
     const [item, setItem] = useState(null);
     const [similarItems, setSimilarItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -99,20 +100,33 @@ export default function ItemDetails() {
     const serviceFee = Math.round(item.pricePerDay * 0.1 * days);
     const totalCost = (item.pricePerDay * days) + securityDeposit + serviceFee;
 
+
     const handleBooking = async () => {
+        if (!isSignedIn) {
+            setRentalError('Please sign in to rent items.');
+            return;
+        }
+
         setConfirming(true);
         try {
-            // Future: Real booking API call
-            // await api.post('/rentals', { productId: itemId, startDate, endDate });
+            const token = await getToken();
+            const res = await api.post('/rentals', {
+                productId: itemId,
+                startDate,
+                endDate
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-            await new Promise(res => setTimeout(res, 1500));
+            // Keep the context update to sync the UI locally, or rely on Dashboard fetching
             addBooking(item, {
                 startDate,
                 endDate,
                 totalCost,
                 securityDeposit,
-                status: 'requested'
+                status: 'pending' // Actual backed status is usually 'pending' at first
             });
+
             setConfirming(false);
             setConfirmed(true);
             setTimeout(() => {
@@ -120,7 +134,8 @@ export default function ItemDetails() {
                 navigate('/dashboard');
             }, 1200);
         } catch (e) {
-            setRentalError('Failed to process booking. Try again.');
+            console.error('Rental error:', e.response?.data || e.message);
+            setRentalError(e.response?.data?.error || 'Failed to process booking. Try again.');
             setConfirming(false);
         }
     };

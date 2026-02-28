@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-    Search, SlidersHorizontal, X, MapPin, Navigation,
+    Search, SlidersHorizontal, X, MapPin, Navigation, Filter,
     ArrowUpDown, LayoutGrid, List, Map as MapIcon,
 } from 'lucide-react';
 import api from '../api/axios.js';
@@ -154,7 +154,7 @@ export default function Browse() {
                         </div>
 
                         <div className="hidden lg:flex items-center gap-3 glass-card p-1 rounded-2xl border border-brand-teal/10">
-                            <Sliders size={16} className="ml-4 text-brand-teal/40" />
+                            <SlidersHorizontal size={16} className="ml-4 text-brand-teal/40" />
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
@@ -323,20 +323,26 @@ export default function Browse() {
                                 </div>
                             </div>
 
-                            {/* Distance */}
-                            <div className="space-y-8 p-8 rounded-[2.5rem] bg-brand-teal/[0.02] border border-brand-teal/5">
+                            {/* Radius */}
+                            <div className="space-y-4 p-6 rounded-3xl bg-brand-teal/[0.03] border border-brand-teal/5">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/40">Max Distance</label>
-                                    <span className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase">{maxDistance}km</span>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/40">Search Radius</label>
+                                    <span className="text-sm font-black text-brand-dark dark:text-brand-frost">
+                                        {radiusKm >= 6000 ? 'All India' : `${radiusKm.toLocaleString()} km`}
+                                    </span>
                                 </div>
                                 <input
                                     type="range"
                                     min="1"
-                                    max="50"
-                                    value={maxDistance}
-                                    onChange={e => setMaxDistance(Number(e.target.value))}
+                                    max="6000"
+                                    step="50"
+                                    value={radiusKm}
+                                    onChange={e => setRadiusKm(Number(e.target.value))}
                                     className="w-full h-2 bg-brand-teal/10 rounded-lg appearance-none cursor-pointer accent-brand-green"
                                 />
+                                <div className="flex justify-between text-[8px] font-bold text-brand-teal/30 uppercase tracking-widest">
+                                    <span>1 km</span><span>All India</span>
+                                </div>
                             </div>
 
                             {/* Price */}
