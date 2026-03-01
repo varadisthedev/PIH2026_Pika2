@@ -65,6 +65,7 @@ export default function ItemDetails() {
     const [confirming, setConfirming] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
     const [rentalError, setRentalError] = useState('');
+    const [connecting, setConnecting] = useState(false);
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -112,6 +113,7 @@ export default function ItemDetails() {
     const imgSrc = productImages[selectedImage] || productImages[0];
     const isAvailable = item.availability ?? item.available ?? true;
     const ownerName = item.owner?.name || 'Local Neighbor';
+    const ownerEmail = item.owner?.email || 'Hidden Email';
     const displayLocation = typeof item.location === 'string' ? item.location : (item.location?.address || 'Local Neighborhood');
     const displayDistance = item.distanceKm || item.distance || null;
 
@@ -157,6 +159,29 @@ export default function ItemDetails() {
             console.error('Rental error:', e.response?.data || e.message);
             setRentalError(e.response?.data?.error || 'Failed to process booking. Try again.');
             setConfirming(false);
+        }
+    };
+
+    const handleMessageSeller = async () => {
+        if (!isSignedIn) {
+            setRentalError('Please sign in to message owners.');
+            return;
+        }
+        if (!item.owner?.email) {
+            setRentalError('Seller email is not available.');
+            return;
+        }
+        
+        setConnecting(true);
+        try {
+            const token = await getToken();
+            await api.post('/chats/connect', { email: item.owner.email }, { headers: { Authorization: `Bearer ${token}` } });
+            navigate('/messages');
+        } catch (err) {
+            console.error('Chat connect error:', err);
+            setRentalError(err.response?.data?.error || 'Failed to connect with seller');
+        } finally {
+            setConnecting(false);
         }
     };
 
@@ -415,21 +440,22 @@ export default function ItemDetails() {
                                 <div className="w-14 h-14 rounded-2xl overflow-hidden glass-card bg-brand-teal/5">
                                     <img src={item.ownerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerName}`} alt="" className="w-full h-full object-cover" />
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 overflow-hidden">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">{ownerName}</h4>
-                                        <Badge variant="approved" className="!text-[9px] px-2 py-0.5 border-none">Top Host</Badge>
+                                        <h4 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter truncate leading-none">{ownerName}</h4>
+                                        <Badge variant="approved" className="!text-[9px] px-2 py-0.5 border-none shrink-0 ml-2">Top Host</Badge>
                                     </div>
-                                    <div className="text-[10px] font-bold text-brand-teal/60 uppercase mt-0.5">Verified Member</div>
+                                    <div className="text-[10px] font-bold text-brand-teal/60 truncate mt-1">{ownerEmail}</div>
                                 </div>
                             </div>
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 className="w-full !text-[11px] !py-3"
-                                onClick={() => navigate('/messages')}
+                                onClick={handleMessageSeller}
+                                disabled={connecting}
                             >
-                                <MessageSquare size={14} /> Message Neighbor
+                                {connecting ? <><Loader2 size={14} className="animate-spin" /> Connecting...</> : <><MessageSquare size={14} /> Message Neighbor</>}
                             </Button>
                         </Card>
                     </aside>

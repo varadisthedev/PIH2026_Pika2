@@ -7,8 +7,9 @@ import {
 import api, { withToken } from '../api/axios.js';
 
 const CATEGORIES = [
-  'Electronics', 'Tools', 'Sports', 'Furniture', 'Vehicles',
-  'Clothing', 'Books', 'Kitchen', 'Garden', 'Other',
+  'Everyday Essentials', 'Tech & Gadgets', 'Home & Living', 'Mobility & Transport',
+  'Event & Party Gear', 'Professional Equipment', 'Outdoor & Adventure',
+  'Fitness & Sports', 'Study & Work Setup', 'Creative & Media Gear',
 ];
 
 const MAX_SAFE = Number.MAX_SAFE_INTEGER;
@@ -35,7 +36,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
   const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
-    title: '', description: '', category: 'Electronics',
+    title: '', description: '', category: 'Everyday Essentials',
     pricePerDay: '', securityDeposit: '',
   });
   const [location, setLocation] = useState({ address: '', lat: null, lng: null });

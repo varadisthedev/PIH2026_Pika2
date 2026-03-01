@@ -25,6 +25,8 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:3000',
+    'https://ab81-2401-4900-881f-d3f8-7e4d-7458-3989-198b.ngrok-free.app',
+    'https://rentigo-pika2.vercel.app'
 ].filter(Boolean);
 
 app.use(

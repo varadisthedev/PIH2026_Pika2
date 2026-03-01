@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, ArrowRight, ShieldCheck, Zap, Users, Camera, Bike, Hammer, Laptop, Music, Dumbbell } from 'lucide-react';
+import { Search, MapPin, ArrowRight, ShieldCheck, Zap, Users, Package, Smartphone, HomeIcon, Bike, PartyPopper, Briefcase, Tent, Dumbbell, BookOpen, Camera } from 'lucide-react';
 import api from '../api/axios.js';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { LoadingGrid, ErrorState } from '../components/items/ItemStates.jsx';
@@ -8,12 +8,16 @@ import Container from '../components/layout/Container.jsx';
 import Button from '../components/ui/Button.jsx';
 
 const CATEGORIES = [
-    { name: 'Cameras', icon: Camera, color: 'bg-blue-500/10 text-blue-500' },
-    { name: 'Transport', icon: Bike, color: 'bg-emerald-500/10 text-emerald-500' },
-    { name: 'Tools', icon: Hammer, color: 'bg-orange-500/10 text-orange-500' },
-    { name: 'Electronics', icon: Laptop, color: 'bg-purple-500/10 text-purple-500' },
-    { name: 'Audio', icon: Music, color: 'bg-pink-500/10 text-pink-500' },
-    { name: 'Sports', icon: Dumbbell, color: 'bg-cyan-500/10 text-cyan-500' },
+    { name: 'Everyday Essentials', icon: Package, color: 'bg-blue-500/10 text-blue-500' },
+    { name: 'Tech & Gadgets', icon: Smartphone, color: 'bg-purple-500/10 text-purple-500' },
+    { name: 'Home & Living', icon: HomeIcon, color: 'bg-orange-500/10 text-orange-500' },
+    { name: 'Mobility & Transport', icon: Bike, color: 'bg-emerald-500/10 text-emerald-500' },
+    { name: 'Event & Party Gear', icon: PartyPopper, color: 'bg-pink-500/10 text-pink-500' },
+    { name: 'Professional Equipment', icon: Briefcase, color: 'bg-gray-500/10 text-gray-500' },
+    { name: 'Outdoor & Adventure', icon: Tent, color: 'bg-green-500/10 text-green-500' },
+    { name: 'Fitness & Sports', icon: Dumbbell, color: 'bg-cyan-500/10 text-cyan-500' },
+    { name: 'Study & Work Setup', icon: BookOpen, color: 'bg-yellow-500/10 text-yellow-500' },
+    { name: 'Creative & Media Gear', icon: Camera, color: 'bg-indigo-500/10 text-indigo-500' },
 ];
 
 const HOW_IT_WORKS = [
@@ -150,6 +154,31 @@ export default function Home() {
                 </Container>
             </section>
 
+            {/* FEATURED ITEMS */}
+            <section className="py-24 bg-brand-green/5 dark:bg-transparent border-y border-brand-teal/5">
+                <Container>
+                    <div className="flex items-end justify-between mb-12">
+                        <div>
+                            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/60 mb-3">Community Hub</h2>
+                            <h3 className="text-4xl font-black text-brand-dark dark:text-brand-frost tracking-tighter">Nearby Favourites</h3>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/browse')} className="!rounded-xl group">
+                            Full Catalogue <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </div>
+
+                    {loading && <LoadingGrid count={4} />}
+                    {error && <ErrorState message={error} onRetry={() => window.location.reload()} />}
+                    {!loading && !error && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {featured.map(item => (
+                                <ItemCard key={item.id} item={item} />
+                            ))}
+                        </div>
+                    )}
+                </Container>
+            </section>
+
             {/* HOW IT WORKS */}
             <section className="py-24">
                 <Container>
@@ -173,31 +202,6 @@ export default function Home() {
                             </div>
                         ))}
                     </div>
-                </Container>
-            </section>
-
-            {/* FEATURED ITEMS */}
-            <section className="py-24 bg-brand-green/5 dark:bg-transparent border-y border-brand-teal/5">
-                <Container>
-                    <div className="flex items-end justify-between mb-12">
-                        <div>
-                            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/60 mb-3">Community Hub</h2>
-                            <h3 className="text-4xl font-black text-brand-dark dark:text-brand-frost tracking-tighter">Nearby Favourites</h3>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate('/browse')} className="!rounded-xl group">
-                            Full Catalogue <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                    </div>
-
-                    {loading && <LoadingGrid count={4} />}
-                    {error && <ErrorState message={error} onRetry={() => window.location.reload()} />}
-                    {!loading && !error && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {featured.map(item => (
-                                <ItemCard key={item.id} item={item} />
-                            ))}
-                        </div>
-                    )}
                 </Container>
             </section>
 

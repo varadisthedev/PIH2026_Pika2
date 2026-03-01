@@ -24,7 +24,7 @@ export default function AddListing() {
     // Form State
     const [formData, setFormData] = useState({
         title: '',
-        category: 'Tools',
+        category: 'Everyday Essentials',
         description: '',
         pricePerDay: '',
         securityDeposit: '',

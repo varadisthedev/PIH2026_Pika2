@@ -236,8 +236,13 @@ export default function Messages() {
                                     </div>
                                     <div>
                                         <h3 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tight leading-none">
-                                            {getOtherParticipant(currentChat)?.name || getOtherParticipant(currentChat)?.email || 'User'}
+                                            {getOtherParticipant(currentChat)?.name || 'User'}
                                         </h3>
+                                        <div className="text-[10px] font-bold text-brand-teal/80 mt-1 lowercase tracking-wide flex items-center gap-2">
+                                            <span>{user?.primaryEmailAddress?.emailAddress}</span>
+                                            <span className="opacity-50 text-brand-green">↔</span>
+                                            <span>{getOtherParticipant(currentChat)?.email}</span>
+                                        </div>
                                         <div className="flex items-center gap-1 mt-1">
                                             <div className="w-1.5 h-1.5 rounded-full bg-brand-green" />
                                             <span className="text-[9px] font-bold text-brand-teal/60 uppercase">Real-time (Auto Sync)</span>

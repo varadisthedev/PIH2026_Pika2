@@ -36,20 +36,6 @@ export default function Browse() {
     const [sortBy, setSortBy] = useState('nearest');
 
 
-    // Auto-detect user location once
-    useEffect(() => {
-        if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(
-            pos => {
-                const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                setUserCoords(coords);
-                console.log('📍 [Browse] User location detected:', coords);
-            },
-            err => console.warn('⚠️ [Browse] Location denied:', err.message),
-            { timeout: 8000 }
-        );
-    }, []);
-
     const loadItems = useCallback(async () => {
         setLoading(true);
         setError(null);

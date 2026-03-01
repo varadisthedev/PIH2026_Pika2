@@ -7,6 +7,7 @@ import {
 import { useTheme } from '../../context/ThemeContext.jsx';
 import { useRental } from '../../context/RentalContext.jsx';
 import { useAuth, useUser, UserButton, SignInButton } from '@clerk/clerk-react';
+import api, { withToken } from '../../api/axios.js';
 import Button from '../ui/Button.jsx';
 import Badge from '../ui/Badge.jsx';
 import ListItemModal from '../ListItemModal.jsx';
@@ -43,6 +44,44 @@ export default function Navbar() {
     }, [isLoaded, isSignedIn, user]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
+    
+    const { getToken } = useAuth();
+    const [hasUnreadChats, setHasUnreadChats] = useState(false);
+
+    useEffect(() => {
+        if (!isSignedIn || !user) return;
+        let mounted = true;
+
+        const checkChats = async () => {
+            try {
+                const token = await getToken();
+                if (!token) return;
+                const res = await api.get('/chats', withToken(token));
+                if (!mounted) return;
+                const chats = res.data.chats || [];
+                
+                const userEmail = user.primaryEmailAddress?.emailAddress?.toLowerCase();
+                
+                const unread = chats.some(chat => {
+                    if (!chat.messages || chat.messages.length === 0) return false;
+                    const lastMsg = chat.messages[chat.messages.length - 1];
+                    const myParticipant = chat.participants?.find(p => p.email?.toLowerCase() === userEmail);
+                    return myParticipant && lastMsg.sender !== myParticipant._id;
+                });
+                
+                setHasUnreadChats(unread);
+            } catch (e) {
+                console.error("Error checking chats:", e);
+            }
+        };
+
+        checkChats();
+        const interval = setInterval(checkChats, 10000);
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
+    }, [isSignedIn, user, getToken]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20);
@@ -145,6 +184,9 @@ export default function Navbar() {
                                 aria-label="Inbox"
                             >
                                 <MessageSquare size={20} className="group-hover:scale-110 transition-transform" />
+                                {hasUnreadChats && (
+                                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand-green border-2 border-white dark:border-brand-dark shadow-brand-green/40 shadow-xl animate-pulse" />
+                                )}
                             </button>
 
                             <button
