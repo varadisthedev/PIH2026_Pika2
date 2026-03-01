@@ -144,31 +144,7 @@ export default function Messages() {
                                 <h1 className="text-3xl font-black text-brand-dark dark:text-brand-frost tracking-tighter uppercase mb-2">Inbox</h1>
                                 <p className="text-[10px] font-black text-brand-teal/40 uppercase tracking-widest">Connect with your community</p>
                             </div>
-                            <Button variant="secondary" onClick={() => setShowConnectModal(true)} className="!p-2.5 rounded-2xl" title="New Chat">
-                                <MailPlus size={18} />
-                            </Button>
                         </div>
-
-                        {showConnectModal && (
-                            <form onSubmit={handleConnect} className="p-4 rounded-3xl glass-card bg-brand-teal/5 border border-brand-teal/20 space-y-3 animate-fade-down">
-                                <h4 className="text-xs font-black uppercase text-brand-dark dark:text-brand-frost">Connect by Email</h4>
-                                <input
-                                    type="email"
-                                    required
-                                    value={connectEmail}
-                                    onChange={(e) => setConnectEmail(e.target.value)}
-                                    placeholder="Enter user's email ID..."
-                                    className="w-full px-4 py-3 rounded-2xl bg-white/50 dark:bg-brand-dark/20 border-none outline-none text-xs font-bold focus:ring-2 focus:ring-brand-green/30"
-                                />
-                                {connectError && <p className="text-[10px] text-red-500 font-bold">{connectError}</p>}
-                                <div className="flex gap-2">
-                                    <Button type="button" variant="outline" className="flex-1 text-[10px]" onClick={() => setShowConnectModal(false)}>Cancel</Button>
-                                    <Button type="submit" variant="primary" className="flex-1 text-[10px]" disabled={connecting}>
-                                        {connecting ? <Loader2 size={14} className="animate-spin" /> : 'Connect'}
-                                    </Button>
-                                </div>
-                            </form>
-                        )}
 
                         <div className="relative">
                             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-teal/40" />
@@ -275,6 +251,21 @@ export default function Messages() {
                                 })}
                                 <div ref={messagesEndRef} />
                             </div>
+
+                            {/* Quick Replies */}
+                            {!currentChat.messages.length && (
+                                <div className="px-8 pb-4 flex flex-wrap gap-2 text-xs font-bold bg-gradient-to-t from-white/40 to-transparent dark:from-transparent">
+                                    <button onClick={() => setNewMessage('Is this still available?')} className="px-4 py-2 rounded-xl bg-brand-green/10 text-brand-green hover:bg-brand-green/20 transition-colors uppercase tracking-widest shadow-sm">
+                                        Is it still available?
+                                    </button>
+                                    <button onClick={() => setNewMessage('When can I pick this up?')} className="px-4 py-2 rounded-xl bg-brand-green/10 text-brand-green hover:bg-brand-green/20 transition-colors uppercase tracking-widest shadow-sm">
+                                        When can I pick this up?
+                                    </button>
+                                    <button onClick={() => setNewMessage('Is the price negotiable?')} className="px-4 py-2 rounded-xl bg-brand-green/10 text-brand-green hover:bg-brand-green/20 transition-colors uppercase tracking-widest shadow-sm">
+                                        Is the price negotiable?
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Chat Input */}
                             <div className="p-6 px-8 border-t border-brand-teal/5 bg-white/40 dark:bg-transparent backdrop-blur-md">

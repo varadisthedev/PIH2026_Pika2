@@ -4,7 +4,7 @@ import User from '../models/User.js';
 // Get all chats for the logged in user
 export const getMyChats = async (req, res) => {
     try {
-        const userId = req.user._id;
+        const userId = req.dbUser._id;
         const chats = await Chat.find({ participants: userId })
             .populate('participants', 'name email')
             .sort({ lastMessageAt: -1 });
@@ -20,7 +20,7 @@ export const getMyChats = async (req, res) => {
 export const connectChat = async (req, res) => {
     try {
         const { email } = req.body;
-        const userId = req.user._id;
+        const userId = req.dbUser._id;
 
         if (!email) {
             return res.status(400).json({ error: 'Email is required to connect' });
@@ -60,7 +60,7 @@ export const sendMessage = async (req, res) => {
     try {
         const { chatId } = req.params;
         const { text } = req.body;
-        const userId = req.user._id;
+        const userId = req.dbUser._id;
 
         if (!text) {
             return res.status(400).json({ error: 'Message text is required' });

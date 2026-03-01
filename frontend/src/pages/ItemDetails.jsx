@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Star, IndianRupee, Calendar, User, ArrowLeft, CheckCircle2, XCircle, ImageOff,
     ShieldCheck, Info, MessageSquare, Clock, Share2, Heart, ChevronRight, AlertCircle,
-    Package, CreditCard, Lock, Flag, ExternalLink
+    Package, CreditCard, Lock, Flag, ExternalLink, Loader2
 } from 'lucide-react';
 import api from '../api/axios.js';
 import { useRental } from '../context/RentalContext.jsx';
@@ -123,6 +123,20 @@ export default function ItemDetails() {
     const totalCost = (item.pricePerDay * days) + securityDeposit + serviceFee;
 
 
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            if (window.Razorpay) {
+                resolve(true);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
     const handleBooking = async () => {
         if (!isSignedIn) {
             setRentalError('Please sign in to rent items.');
@@ -130,34 +144,92 @@ export default function ItemDetails() {
         }
 
         setConfirming(true);
+        setRentalError('');
+
         try {
             const token = await getToken();
-            const res = await api.post('/rentals', {
+            
+            // 1. Create Rental record (Pending)
+            const rentalRes = await api.post('/rentals', {
                 productId: itemId,
                 startDate,
                 endDate
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            const rentalId = rentalRes.data.rental._id;
 
-            // Keep the context update to sync the UI locally, or rely on Dashboard fetching
-            addBooking(item, {
-                startDate,
-                endDate,
-                totalCost,
-                securityDeposit,
-                status: 'pending' // Actual backed status is usually 'pending' at first
+            // 2. Load Razorpay Script
+            const scriptLoaded = await loadRazorpayScript();
+            if (!scriptLoaded) {
+                throw new Error('Razorpay SDK failed to load. Are you connected to the internet?');
+            }
+
+            // 3. Create Razorpay Order via Backend
+            const orderRes = await api.post('/payments/create-order', {
+                rentalId
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
             });
+            const { orderId, amount, keyId } = orderRes.data;
 
-            setConfirming(false);
-            setConfirmed(true);
-            setTimeout(() => {
-                setBookingModalOpen(false);
-                navigate('/dashboard');
-            }, 1200);
+            // 4. Open Razorpay Checkout Options
+            const options = {
+                key: keyId,
+                amount: amount,
+                currency: 'INR',
+                name: 'RentiGO',
+                description: 'Rental Payment for ' + item.title,
+                order_id: orderId,
+                handler: async function (response) {
+                    try {
+                        // 5. Verify payment signature
+                        await api.post('/payments/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        }, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+
+                        // 6. Update successful state locally
+                        addBooking(item, {
+                            startDate,
+                            endDate,
+                            totalCost,
+                            securityDeposit,
+                            status: 'approved'
+                        });
+
+                        setConfirming(false);
+                        setConfirmed(true);
+                        setTimeout(() => {
+                            setBookingModalOpen(false);
+                            navigate('/dashboard');
+                        }, 1200);
+
+                    } catch (verifyError) {
+                        console.error('Payment verification failed:', verifyError);
+                        setRentalError('Payment verification failed. Please contact support.');
+                        setConfirming(false);
+                    }
+                },
+                theme: {
+                    color: '#007EA7'
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                console.error('Payment failed:', response.error);
+                setRentalError(response.error.description);
+                setConfirming(false);
+            });
+            rzp.open();
+
         } catch (e) {
             console.error('Rental error:', e.response?.data || e.message);
-            setRentalError(e.response?.data?.error || 'Failed to process booking. Try again.');
+            setRentalError(e.response?.data?.error || e.message || 'Failed to process booking. Try again.');
             setConfirming(false);
         }
     };
@@ -430,7 +502,7 @@ export default function ItemDetails() {
                                 onClick={() => setBookingModalOpen(true)}
                                 disabled={!isAvailable}
                             >
-                                {isAvailable ? <><Lock size={18} /> Request to Book</> : <><XCircle size={18} /> Rented Out</>}
+                                {isAvailable ? <><Lock size={18} /> Confirm & Pay</> : <><XCircle size={18} /> Rented Out</>}
                             </Button>
                         </Card>
 
@@ -487,9 +559,9 @@ export default function ItemDetails() {
                             <CheckCircle2 size={40} className="text-brand-green" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black text-brand-dark dark:text-brand-frost tracking-tighter mb-2">Request Sent!</h3>
+                            <h3 className="text-2xl font-black text-brand-dark dark:text-brand-frost tracking-tighter mb-2">Payment Successful!</h3>
                             <p className="text-sm font-bold text-brand-teal/60 uppercase tracking-tight max-w-[280px] mx-auto">
-                                The owner has been notified. We will alert you once they accept.
+                                The rental is approved and the owner has been notified.
                             </p>
                         </div>
                     </div>
@@ -508,8 +580,10 @@ export default function ItemDetails() {
                         </div>
                         {rentalError && <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest">{rentalError}</div>}
                         <div className="flex gap-4 pt-4">
-                            <Button variant="outline" size="lg" className="flex-1 !rounded-2xl" onClick={() => setBookingModalOpen(false)}>Back</Button>
-                            <Button variant="primary" size="lg" className="flex-1 !rounded-2xl" onClick={handleBooking} loading={confirming}>Confirm Request</Button>
+                            <Button variant="outline" size="lg" className="flex-1 !rounded-2xl" onClick={() => setBookingModalOpen(false)} disabled={confirming}>Back</Button>
+                            <Button variant="primary" size="lg" className="flex-1 !rounded-2xl" onClick={handleBooking} disabled={confirming}>
+                                {confirming ? <><Loader2 size={16} className="animate-spin mr-2" /> Processing...</> : 'Confirm & Pay'}
+                            </Button>
                         </div>
                     </div>
                 )}
@@ -529,7 +603,7 @@ export default function ItemDetails() {
                         onClick={() => setBookingModalOpen(true)}
                         disabled={!isAvailable}
                     >
-                        {isAvailable ? 'Request to Book' : 'Rented'}
+                        {isAvailable ? 'Confirm & Pay' : 'Rented'}
                     </Button>
                 </div>
             </div>

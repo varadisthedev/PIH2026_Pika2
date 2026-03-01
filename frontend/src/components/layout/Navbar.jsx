@@ -34,19 +34,35 @@ export default function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const { isSignedIn, isLoaded } = useAuth();
+    const { isSignedIn, isLoaded, getToken } = useAuth();
     const { user } = useUser();
+
+    const [unreadCount, setUnreadCount] = useState(0);
+    const [hasUnreadChats, setHasUnreadChats] = useState(false);
+
+    // Poll real notifications from backend
+    useEffect(() => {
+        if (!isSignedIn || !user) return;
+        let mounted = true;
+        const fetchUnread = async () => {
+            try {
+                const token = await getToken();
+                if (!token || !mounted) return;
+                const res = await api.get('/notifications', withToken(token));
+                const notifs = res.data.notifications || [];
+                if (mounted) setUnreadCount(notifs.filter(n => !n.isRead).length);
+            } catch { /* silent fail */ }
+        };
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 15000);
+        return () => { mounted = false; clearInterval(interval); };
+    }, [isSignedIn, user, getToken]);
 
     useEffect(() => {
         if (isLoaded) {
             console.log(`🔐 [Navbar] isSignedIn: ${isSignedIn} | user: ${user?.primaryEmailAddress?.emailAddress ?? 'guest'}`);
         }
     }, [isLoaded, isSignedIn, user]);
-
-    const unreadCount = notifications.filter(n => !n.read).length;
-    
-    const { getToken } = useAuth();
-    const [hasUnreadChats, setHasUnreadChats] = useState(false);
 
     useEffect(() => {
         if (!isSignedIn || !user) return;

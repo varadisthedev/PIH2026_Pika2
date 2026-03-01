@@ -12,6 +12,18 @@ export const getMe = async (req, res) => {
     }
 };
 
+// POST /api/users/welcome
+export const updateWelcome = async (req, res) => {
+    try {
+        const userId = req.dbUser._id;
+        await User.findByIdAndUpdate(userId, { hasSeenWelcome: true });
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('❌ [userController] updateWelcome error:', error.message);
+        res.status(500).json({ error: 'Failed to update welcome status' });
+    }
+};
+
 // PATCH /api/users/role  (admin only)
 export const updateUserRole = async (req, res) => {
     try {

@@ -31,9 +31,11 @@ export const createRental = async (req, res) => {
             return res.status(400).json({ error: 'endDate must be after startDate' });
         }
 
-        const totalPrice = days * product.pricePerDay;
+        const securityDeposit = Math.round(product.pricePerDay * 2);
+        const serviceFee = Math.round(product.pricePerDay * 0.1 * days);
+        const totalPrice = (days * product.pricePerDay) + securityDeposit + serviceFee;
 
-        console.log(`💰 [rentalController] Rental: ${days} days × ₹${product.pricePerDay} = ₹${totalPrice}`);
+        console.log(`💰 [rentalController] Rental: ${days} days + deposit + fee = ₹${totalPrice}`);
 
         const rental = await Rental.create({
             product: productId,

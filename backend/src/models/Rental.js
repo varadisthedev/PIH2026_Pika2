@@ -27,7 +27,21 @@ const rentalSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['pending', 'approved', 'rejected', 'completed', 'cancelled'],
+            enum: ['pending', 'approved', 'confirmed', 'rejected', 'completed', 'cancelled'],
+            default: 'pending',
+        },
+        paymentId: {
+            type: String,
+        },
+        orderId: {
+            type: String,
+        },
+        amount: {
+            type: Number,
+        },
+        paymentStatus: {
+            type: String,
+            enum: ['pending', 'paid', 'failed'],
             default: 'pending',
         },
     },

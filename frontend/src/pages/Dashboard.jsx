@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, Package, Clock, CheckCircle2, RotateCcw, IndianRupee, Plus,
-    Calendar, ArrowRight, Loader2, Store, Trash2, Pencil, User, XCircle, Mail,
+    Calendar, ArrowRight, Loader2, Store, Trash2, Pencil, User, XCircle, Mail, X, Save,
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import api, { withToken } from '../api/axios.js';
@@ -145,6 +145,9 @@ export default function Dashboard() {
     const [activeTab, setActiveTab] = useState('requests');
     const [showListModal, setShowListModal] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [editItem, setEditItem] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [updateSaving, setUpdateSaving] = useState(false);
 
     const loadData = useCallback(async () => {
         if (!isSignedIn) return;
@@ -203,16 +206,53 @@ export default function Dashboard() {
 
     const handleDeleteListing = async (productId) => {
         if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+        const removed = myListings.find(p => p._id === productId);
+        // Optimistic
+        setMyListings(prev => prev.filter(p => p._id !== productId));
         setDeletingId(productId);
         try {
             const token = await getToken();
             await api.delete(`/products/${productId}`, withToken(token));
-            console.log(`🗑️ [Dashboard] Product ${productId} deleted`);
-            setMyListings(prev => prev.filter(p => p._id !== productId));
+            showToast('Item deleted successfully', 'success');
         } catch (err) {
             console.error('❌ [Dashboard] Delete failed:', err.message);
+            setMyListings(prev => [...prev, removed]);
+            showToast('Failed to delete item', 'error');
         } finally {
             setDeletingId(null);
+        }
+    };
+
+    const handleEditOpen = (item) => {
+        setEditItem(item);
+        setEditForm({
+            title: item.title || '',
+            description: item.description || '',
+            pricePerDay: item.pricePerDay || '',
+            category: item.category || '',
+            availability: item.availability !== false,
+        });
+    };
+
+    const handleEditSave = async () => {
+        if (!editItem) return;
+        if (!editForm.title || !editForm.pricePerDay) {
+            showToast('Title and price are required', 'error');
+            return;
+        }
+        setUpdateSaving(true);
+        try {
+            const token = await getToken();
+            const res = await api.put(`/products/${editItem._id}`, editForm, withToken(token));
+            const updated = res.data.product;
+            setMyListings(prev => prev.map(p => p._id === editItem._id ? { ...p, ...updated } : p));
+            setEditItem(null);
+            showToast('Item updated successfully', 'success');
+        } catch (err) {
+            console.error('❌ [Dashboard] Edit failed:', err.message);
+            showToast('Failed to update item', 'error');
+        } finally {
+            setUpdateSaving(false);
         }
     };
     const { userRole } = useRental(); // 'renter' or 'lender'
@@ -403,13 +443,14 @@ export default function Dashboard() {
                                                 )}
                                             </div>
                                         </Link>
-                                        {/* Edit / Delete overlay */}
+                                        {/* Edit / Delete buttons */}
                                         <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Link to={`/item/${item._id}`}
+                                            <button
+                                                onClick={() => handleEditOpen(item)}
                                                 className="p-1.5 rounded-lg bg-white/80 dark:bg-[#162521]/80 text-[#3C474B] hover:text-brand-teal dark:text-[#9EEFE5] dark:hover:text-brand-green shadow-sm backdrop-blur-sm"
-                                                title="View / Edit">
+                                                title="Edit listing">
                                                 <Pencil size={13} />
-                                            </Link>
+                                            </button>
                                             <button onClick={() => handleDeleteListing(item._id)} disabled={deletingId === item._id}
                                                 className="p-1.5 rounded-lg bg-white/80 dark:bg-[#162521]/80 text-red-400 hover:text-red-600 shadow-sm backdrop-blur-sm disabled:opacity-50"
                                                 title="Delete listing">
@@ -431,6 +472,61 @@ export default function Dashboard() {
                     onSuccess={() => { console.log('🆕 [Dashboard] New listing — refreshing'); loadData(); }}
                 />
             )}
+
+            {/* ── Edit Product Modal ── */}
+            {editItem && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
+                    <div className="bg-white dark:bg-[#003459] rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl space-y-6 animate-fade-up">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-black text-brand-dark dark:text-brand-frost tracking-tighter uppercase">Edit Listing</h2>
+                            <button onClick={() => setEditItem(null)} className="p-2 rounded-xl hover:bg-brand-teal/10 text-brand-teal"><X size={20} /></button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-brand-teal/60 mb-1">Title</label>
+                                <input type="text" value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                                    className="w-full px-4 py-3 rounded-2xl bg-brand-teal/5 dark:bg-white/5 border border-brand-teal/10 text-sm font-bold text-brand-dark dark:text-brand-frost outline-none focus:ring-2 focus:ring-brand-green/30" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-brand-teal/60 mb-1">Description</label>
+                                <textarea rows={3} value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                                    className="w-full px-4 py-3 rounded-2xl bg-brand-teal/5 dark:bg-white/5 border border-brand-teal/10 text-sm font-bold text-brand-dark dark:text-brand-frost outline-none focus:ring-2 focus:ring-brand-green/30 resize-none" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-teal/60 mb-1">Price / Day (₹)</label>
+                                    <input type="number" value={editForm.pricePerDay} onChange={e => setEditForm(f => ({ ...f, pricePerDay: e.target.value }))}
+                                        className="w-full px-4 py-3 rounded-2xl bg-brand-teal/5 dark:bg-white/5 border border-brand-teal/10 text-sm font-bold text-brand-dark dark:text-brand-frost outline-none focus:ring-2 focus:ring-brand-green/30" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black uppercase tracking-widest text-brand-teal/60 mb-1">Availability</label>
+                                    <select value={editForm.availability ? 'true' : 'false'} onChange={e => setEditForm(f => ({ ...f, availability: e.target.value === 'true' }))}
+                                        className="w-full px-4 py-3 rounded-2xl bg-brand-teal/5 dark:bg-white/5 border border-brand-teal/10 text-sm font-bold text-brand-dark dark:text-brand-frost outline-none focus:ring-2 focus:ring-brand-green/30">
+                                        <option value="true">Available</option>
+                                        <option value="false">Unavailable</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <Button variant="outline" className="flex-1 !rounded-2xl" onClick={() => setEditItem(null)} disabled={updateSaving}>Cancel</Button>
+                            <Button variant="primary" className="flex-1 !rounded-2xl" onClick={handleEditSave} disabled={updateSaving}>
+                                {updateSaving ? <><Loader2 size={15} className="animate-spin mr-2" /> Saving...</> : <><Save size={15} className="mr-1" /> Save Changes</>}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
+}
+
+function showToast(message, type = 'info') {
+    const el = document.createElement('div');
+    el.className = `fixed bottom-6 right-6 z-[9999] px-6 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl ${type === 'success' ? 'bg-brand-green text-white' : type === 'error' ? 'bg-red-500 text-white' : 'bg-brand-dark text-brand-frost'}`;
+    el.textContent = message;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
 }

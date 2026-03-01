@@ -1,8 +1,9 @@
 import User from '../models/User.js';
+import { clerkClient } from '@clerk/express';
 
 /**
  * Middleware: Sync Clerk user into MongoDB on every authenticated request.
- * If user doesn't exist in DB, auto-create them with default role 'buyer'.
+ * If user doesn't exist in DB or lacks valid names/emails, fetches full profile from Clerk backend.
  */
 const syncUser = async (req, res, next) => {
     try {
@@ -15,24 +16,51 @@ const syncUser = async (req, res, next) => {
         // Check if user already exists in DB
         let user = await User.findOne({ clerkId: userId });
 
-        if (!user) {
-            // Log what Clerk actually gives us in the JWT
-            const claims = req.auth?.sessionClaims || {};
-            console.log(`🔍 [syncUser] Session claims for new user:`, JSON.stringify(claims));
+        // If user is missing OR has missing/default data from old JWT token issues
+        if (!user || user.name === 'RentiGO User' || !user.email) {
+            try {
+                // Fetch the absolute truth from the Clerk Backend SDK
+                const clerkUser = await clerkClient.users.getUser(userId);
 
-            const claimEmail = claims.email || claims.primaryEmailAddress || '';
-            const claimName = claims.name || claims.username || claims.firstName || 'RentiGO User';
+                const claimEmail = clerkUser.emailAddresses?.[0]?.emailAddress
+                    || req.auth?.sessionClaims?.email
+                    || req.auth?.sessionClaims?.primaryEmailAddress
+                    || '';
 
-            console.log(`🆕 [syncUser] Creating new DB user for clerkId: ${userId} | email: "${claimEmail}" | name: "${claimName}"`);
+                const claimName = clerkUser.firstName
+                    ? `${clerkUser.firstName} ${clerkUser.lastName || ''}`.trim()
+                    : clerkUser.username
+                        ? clerkUser.username
+                        : req.auth?.sessionClaims?.name
+                            ? req.auth?.sessionClaims?.name
+                            : 'RentiGO User';
 
-            user = await User.create({
-                clerkId: userId,
-                email: claimEmail,
-                name: claimName,
-                role: 'buyer',
-            });
-
-            console.log(`✅ [syncUser] New user created: ${user._id} (email: "${user.email}")`);
+                if (!user) {
+                    console.log(`🆕 [syncUser] Creating full DB user for clerkId: ${userId} | email: "${claimEmail}" | name: "${claimName}"`);
+                    user = await User.create({
+                        clerkId: userId,
+                        email: claimEmail,
+                        name: claimName,
+                        role: 'buyer',
+                    });
+                } else {
+                    console.log(`♻️ [syncUser] Patching existing DB user with fetched Clerk data for: ${userId}`);
+                    user.email = claimEmail;
+                    user.name = claimName;
+                    await user.save();
+                }
+            } catch (err) {
+                console.error('⚠️ [syncUser] Error fetching from Clerk API:', err.message);
+                if (!user) {
+                    // Fallback create
+                    user = await User.create({
+                        clerkId: userId,
+                        email: req.auth?.sessionClaims?.email || '',
+                        name: req.auth?.sessionClaims?.name || 'RentiGO User',
+                        role: 'buyer'
+                    });
+                }
+            }
         }
 
         // Attach full DB user to request
