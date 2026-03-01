@@ -80,8 +80,8 @@ export default function ItemCard({ item }) {
                     <div
                         className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md shadow-lg"
                         style={{
-                            backgroundColor: isAvailable ? 'rgba(153, 209, 156, 0.9)' : 'rgba(250, 160, 160, 0.9)',
-                            color: isAvailable ? '#000501' : '#7f1d1d',
+                            backgroundColor: isAvailable ? 'rgba(79, 124, 172, 0.9)' : 'rgba(250, 160, 160, 0.9)',
+                            color: isAvailable ? '#162521' : '#7f1d1d',
                         }}
                     >
                         <span className={`w-1.5 h-1.5 rounded-full ${isAvailable ? 'bg-emerald-600 animate-pulse' : 'bg-red-500'}`} />

@@ -6,6 +6,7 @@ import {
     getMyRentals,
     getSellerRentals,
     updateRentalStatus,
+    cancelRental,
     getAllRentals,
 } from '../controllers/rentalController.js';
 
@@ -22,5 +23,8 @@ router.get('/seller', requireAuth(), syncUser, getSellerRentals);
 
 // PATCH /api/rentals/:id/status – any auth user (controller verifies ownership)
 router.patch('/:id/status', requireAuth(), syncUser, updateRentalStatus);
+
+// PATCH /api/rentals/:id/cancel – renter cancelling their own rental request
+router.patch('/:id/cancel', requireAuth(), syncUser, cancelRental);
 
 export default router;

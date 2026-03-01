@@ -194,11 +194,11 @@ export default function ListItemModal({ onClose, onSuccess }) {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-20 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-lg glass-card rounded-3xl shadow-2xl overflow-hidden animate-fade-up max-h-[92vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#99d19c]/20 dark:border-[#79c7c5]/10 shrink-0">
+        <div className="flex items-center justify-between p-6 border-b border-[#4f7CAC]/20 dark:border-[#9EEFE5]/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-brand-green/20 flex items-center justify-center">
               <Package size={20} className="text-brand-teal dark:text-brand-green" />
@@ -208,7 +208,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
               <p className="text-xs text-brand-teal dark:text-brand-aqua/70 font-semibold">Earn by renting to neighbours</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-[#73ab84] hover:bg-[#73ab84]/10 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl text-[#3C474B] hover:bg-[#3C474B]/10 transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -223,11 +223,11 @@ export default function ListItemModal({ onClose, onSuccess }) {
             <div className="grid grid-cols-2 gap-3">
               <div className="glass rounded-2xl p-4 text-center">
                 <div className="text-3xl font-black text-brand-teal dark:text-brand-green">{aiInsights.rentalValueScore}/10</div>
-                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-1">Rental Value Score</div>
+                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-1">Rental Value Score</div>
               </div>
               <div className="glass rounded-2xl p-4 text-center">
                 <div className="text-3xl font-black text-brand-teal dark:text-brand-green">{aiInsights.demandEstimate}</div>
-                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-1">Demand</div>
+                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-1">Demand</div>
               </div>
             </div>
             {aiInsights.pricingSuggestion && (
@@ -251,23 +251,23 @@ export default function ListItemModal({ onClose, onSuccess }) {
 
             {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5]">Item Title *</label>
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#99d19c]/40 dark:border-[#79c7c5]/20 bg-white/60 dark:bg-[#000501]/60 focus-within:ring-2 focus-within:ring-[#79c7c5]/40 transition-all">
-                <Tag size={15} className="text-[#73ab84] shrink-0" />
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5]">Item Title *</label>
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 bg-white/60 dark:bg-[#162521]/60 focus-within:ring-2 focus-within:ring-[#9EEFE5]/40 transition-all">
+                <Tag size={15} className="text-[#3C474B] shrink-0" />
                 <input name="title" value={form.title} onChange={handleChange} placeholder="e.g. Canon DSLR Camera"
-                  className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost placeholder:text-[#73ab84]/50 outline-none" required maxLength={100} />
+                  className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost placeholder:text-[#3C474B]/50 outline-none" required maxLength={100} />
               </div>
             </div>
 
             {/* Category */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5]">Category *</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5]">Category *</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map(cat => (
                   <button key={cat} type="button" onClick={() => setForm(p => ({ ...p, category: cat }))}
                     className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${form.category === cat
                       ? 'bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark'
-                      : 'bg-[#99d19c]/20 text-[#3d6b50] hover:bg-[#99d19c]/35 dark:bg-[#73ab84]/15 dark:text-[#79c7c5]'}`}>
+                      : 'bg-[#4f7CAC]/20 text-[#3d6b50] hover:bg-[#4f7CAC]/35 dark:bg-[#3C474B]/15 dark:text-[#9EEFE5]'}`}>
                     {cat}
                   </button>
                 ))}
@@ -277,20 +277,20 @@ export default function ListItemModal({ onClose, onSuccess }) {
             {/* Price + Deposit */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5]">Price / Day (₹) *</label>
-                <div className="flex items-center gap-2 px-3 py-3 rounded-xl border border-[#99d19c]/40 dark:border-[#79c7c5]/20 bg-white/60 dark:bg-[#000501]/60 focus-within:ring-2 focus-within:ring-[#79c7c5]/40 transition-all">
-                  <IndianRupee size={14} className="text-[#73ab84] shrink-0" />
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5]">Price / Day (₹) *</label>
+                <div className="flex items-center gap-2 px-3 py-3 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 bg-white/60 dark:bg-[#162521]/60 focus-within:ring-2 focus-within:ring-[#9EEFE5]/40 transition-all">
+                  <IndianRupee size={14} className="text-[#3C474B] shrink-0" />
                   <input name="pricePerDay" type="number" min="1" value={form.pricePerDay} onChange={handleChange}
                     placeholder="500" className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost outline-none" required />
                 </div>
                 <NumberWarning value={form.pricePerDay} />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5] flex items-center gap-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5] flex items-center gap-1">
                   <ShieldCheck size={11} /> Deposit (₹)
                 </label>
-                <div className="flex items-center gap-2 px-3 py-3 rounded-xl border border-[#99d19c]/40 dark:border-[#79c7c5]/20 bg-white/60 dark:bg-[#000501]/60 focus-within:ring-2 focus-within:ring-[#79c7c5]/40 transition-all">
-                  <IndianRupee size={14} className="text-[#73ab84] shrink-0" />
+                <div className="flex items-center gap-2 px-3 py-3 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 bg-white/60 dark:bg-[#162521]/60 focus-within:ring-2 focus-within:ring-[#9EEFE5]/40 transition-all">
+                  <IndianRupee size={14} className="text-[#3C474B] shrink-0" />
                   <input name="securityDeposit" type="number" min="0" value={form.securityDeposit} onChange={handleChange}
                     placeholder="0" className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost outline-none" />
                 </div>
@@ -300,31 +300,31 @@ export default function ListItemModal({ onClose, onSuccess }) {
 
             {/* Description */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5]">Description *</label>
-              <div className="flex gap-3 px-4 py-3 rounded-xl border border-[#99d19c]/40 dark:border-[#79c7c5]/20 bg-white/60 dark:bg-[#000501]/60 focus-within:ring-2 focus-within:ring-[#79c7c5]/40 transition-all">
-                <FileText size={15} className="text-[#73ab84] shrink-0 mt-0.5" />
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5]">Description *</label>
+              <div className="flex gap-3 px-4 py-3 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 bg-white/60 dark:bg-[#162521]/60 focus-within:ring-2 focus-within:ring-[#9EEFE5]/40 transition-all">
+                <FileText size={15} className="text-[#3C474B] shrink-0 mt-0.5" />
                 <textarea name="description" value={form.description} onChange={handleChange}
                   placeholder="Condition, what's included, usage notes..." rows={3}
-                  className="flex-1 bg-transparent text-sm font-medium text-brand-dark dark:text-brand-frost placeholder:text-[#73ab84]/50 outline-none resize-none" required maxLength={500} />
+                  className="flex-1 bg-transparent text-sm font-medium text-brand-dark dark:text-brand-frost placeholder:text-[#3C474B]/50 outline-none resize-none" required maxLength={500} />
               </div>
             </div>
 
             {/* Location */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5] flex items-center gap-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5] flex items-center gap-1">
                 <MapPin size={11} /> Location
               </label>
               <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 px-3 py-3 rounded-xl border border-[#99d19c]/40 dark:border-[#79c7c5]/20 bg-white/60 dark:bg-[#000501]/60 focus-within:ring-2 focus-within:ring-[#79c7c5]/40 transition-all">
-                  <MapPin size={14} className="text-[#73ab84] shrink-0" />
+                <div className="flex-1 flex items-center gap-2 px-3 py-3 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 bg-white/60 dark:bg-[#162521]/60 focus-within:ring-2 focus-within:ring-[#9EEFE5]/40 transition-all">
+                  <MapPin size={14} className="text-[#3C474B] shrink-0" />
                   <input type="text" value={location.address}
                     onChange={e => setLocation(prev => ({ ...prev, address: e.target.value, lat: null, lng: null }))}
                     placeholder="Type address or detect automatically"
-                    className="flex-1 bg-transparent text-sm font-medium text-brand-dark dark:text-brand-frost placeholder:text-[#73ab84]/40 outline-none" />
+                    className="flex-1 bg-transparent text-sm font-medium text-brand-dark dark:text-brand-frost placeholder:text-[#3C474B]/40 outline-none" />
                 </div>
                 <button type="button" onClick={detectLocation} disabled={geoLoading}
                   title="Detect my location"
-                  className="px-3 py-2 rounded-xl border border-[#99d19c]/40 dark:border-[#79c7c5]/20 text-brand-teal dark:text-brand-green hover:bg-brand-teal/10 transition-colors disabled:opacity-50 shrink-0 flex items-center gap-1.5 text-xs font-bold">
+                  className="px-3 py-2 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 text-brand-teal dark:text-brand-green hover:bg-brand-teal/10 transition-colors disabled:opacity-50 shrink-0 flex items-center gap-1.5 text-xs font-bold">
                   {geoLoading ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
                   {geoLoading ? 'Detecting…' : 'Detect'}
                 </button>
@@ -340,7 +340,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
             {/* Image Upload */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5] flex items-center gap-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5] flex items-center gap-1">
                   <Image size={11} /> Photos (up to 5)
                 </label>
                 {imageFiles.length < 5 && (
@@ -356,7 +356,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
               {imagePreviews.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {imagePreviews.map((src, i) => (
-                    <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#99d19c]/40 dark:border-[#79c7c5]/20">
+                    <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20">
                       <img src={src} alt={`preview-${i}`} className="w-full h-full object-cover" />
                       <button type="button" onClick={() => removeImage(i)}
                         className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
@@ -366,7 +366,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
                   ))}
                   {imageFiles.length < 5 && (
                     <button type="button" onClick={() => fileInputRef.current?.click()}
-                      className="w-20 h-20 rounded-xl border-2 border-dashed border-[#99d19c]/40 dark:border-[#79c7c5]/20 flex flex-col items-center justify-center gap-1 text-[#73ab84] dark:text-[#79c7c5] hover:bg-[#73ab84]/10 transition-colors">
+                      className="w-20 h-20 rounded-xl border-2 border-dashed border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 flex flex-col items-center justify-center gap-1 text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 transition-colors">
                       <Plus size={18} />
                       <span className="text-[9px] font-bold">Add</span>
                     </button>
@@ -374,7 +374,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
                 </div>
               ) : (
                 <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-[#99d19c]/40 dark:border-[#79c7c5]/20 text-[#73ab84] dark:text-[#79c7c5] hover:bg-[#73ab84]/10 transition-colors">
+                  className="flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 transition-colors">
                   <Upload size={24} className="opacity-50" />
                   <span className="text-xs font-bold">Click to browse photos from your device</span>
                   <span className="text-[10px] opacity-60">JPEG, PNG, WebP, GIF — max 5MB each</span>
@@ -390,7 +390,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
 
             <div className="flex gap-3 pt-1">
               <button type="button" onClick={onClose}
-                className="flex-1 py-3 rounded-2xl font-bold text-sm border border-[#99d19c]/40 dark:border-[#79c7c5]/20 text-[#73ab84] dark:text-[#79c7c5] hover:bg-[#73ab84]/10 transition-colors">
+                className="flex-1 py-3 rounded-2xl font-bold text-sm border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 transition-colors">
                 Cancel
               </button>
               <button type="submit" disabled={loading || hasNumberError}
@@ -401,7 +401,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
               </button>
             </div>
 
-            <p className="text-center text-xs text-[#73ab84]/70 dark:text-[#79c7c5]/50">
+            <p className="text-center text-xs text-[#3C474B]/70 dark:text-[#9EEFE5]/50">
               🤖 Gemini AI will analyze your listing for free
             </p>
           </form>

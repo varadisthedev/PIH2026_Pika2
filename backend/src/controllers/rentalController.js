@@ -88,7 +88,7 @@ export const getSellerRentals = async (req, res) => {
         }
 
         const rentals = await Rental.find({ product: { $in: productIds } })
-            .populate('product', 'title category pricePerDay images')
+            .populate('product', 'title category pricePerDay securityDeposit images')
             .populate('renter', 'name email')
             .sort({ createdAt: -1 });
 
@@ -136,6 +136,41 @@ export const updateRentalStatus = async (req, res) => {
         res.status(500).json({ error: 'Failed to update rental status' });
     }
 };
+
+// PATCH /api/rentals/:id/cancel  (renter only – cancel pending/approved request)
+export const cancelRental = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const renterDbUser = req.dbUser;
+
+        console.log(`🔄 [rentalController] PATCH /rentals/${id}/cancel`);
+
+        const rental = await Rental.findById(id).populate('product');
+        if (!rental) {
+            return res.status(404).json({ error: 'Rental not found' });
+        }
+
+        // Verify renter placed this request
+        if (rental.renter.toString() !== renterDbUser._id.toString()) {
+            console.warn(`🚫 [rentalController] Unauthorized cancel attempt by: ${renterDbUser._id}`);
+            return res.status(403).json({ error: 'Forbidden – you did not make this request' });
+        }
+
+        if (rental.status !== 'pending' && rental.status !== 'approved') {
+            return res.status(400).json({ error: 'Only pending or approved requests can be cancelled' });
+        }
+
+        rental.status = 'cancelled';
+        await rental.save();
+
+        console.log(`✅ [rentalController] Rental ${id} status updated to: cancelled`);
+        res.status(200).json({ message: 'Rental cancelled', rental });
+    } catch (error) {
+        console.error('❌ [rentalController] cancelRental error:', error.message);
+        res.status(500).json({ error: 'Failed to cancel rental' });
+    }
+};
+
 
 // GET /api/admin/rentals  (admin only)
 export const getAllRentals = async (req, res) => {
