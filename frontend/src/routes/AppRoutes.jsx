@@ -5,7 +5,6 @@ import Footer from '../components/layout/Footer.jsx';
 import Home from '../pages/Home.jsx';
 import Browse from '../pages/Browse.jsx';
 import ItemDetails from '../pages/ItemDetails.jsx';
-import AddListing from '../pages/AddListing.jsx';
 import Login from '../pages/Login.jsx';
 import Wishlist from '../pages/Wishlist.jsx';
 import Messages from '../pages/Messages.jsx';
@@ -50,15 +49,15 @@ export default function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
 
-        {/* Role-Specific Journeys */}
+        {/* Role-Specific Journeys — /list-item removed, redirects to browse */}
         <Route path="/my-bookings" element={<Navigate to="/dashboard" replace />} />
         <Route path="/my-listings" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/list-item" element={<AddListing />} />
+        <Route path="/list-item" element={<Navigate to="/browse" replace />} />
         <Route path="/earnings" element={<Earnings />} />
 
         {/* Auth */}
         <Route path="/login" element={<Login />} />
-        <Route path="/sign-up" element={<Login />} /> {/* Login page usually contains sign up too or redirect to Clerk */}
+        <Route path="/sign-up" element={<Login />} />
 
         {/* Catch-all & Redirects */}
         <Route path="/404" element={<NotFound />} />

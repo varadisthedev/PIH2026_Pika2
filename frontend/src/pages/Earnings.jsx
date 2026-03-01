@@ -5,7 +5,7 @@ import api from '../api/axios.js';
 import {
     IndianRupee, TrendingUp, Calendar, ArrowRight, ArrowLeft,
     Download, Info, ShieldCheck, CheckCircle2, LayoutDashboard,
-    PieChart, DollarSign
+    PieChart, DollarSign, Loader2
 } from 'lucide-react';
 import { useRental } from '../context/RentalContext.jsx';
 import Container from '../components/layout/Container.jsx';
@@ -20,6 +20,7 @@ export default function Earnings() {
     const { getToken } = useAuth();
     const [payouts, setPayouts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
 
     useEffect(() => {
         if (userRole !== 'lender') {
@@ -50,6 +51,176 @@ export default function Earnings() {
     // Summing up accepted/completed total rent
     const processedEarnings = payouts.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0);
 
+    const exportPDF = async () => {
+        setExporting(true);
+        try {
+            const { jsPDF } = await import('jspdf');
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            const pageW = doc.internal.pageSize.getWidth();
+            const margin = 18;
+            const contentW = pageW - margin * 2;
+            let y = 0;
+
+            // ── Header Banner ─────────────────────────────────────────────
+            doc.setFillColor(22, 37, 33);          // brand-dark
+            doc.rect(0, 0, pageW, 42, 'F');
+
+            doc.setTextColor(192, 224, 210);       // brand-frost
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text('RentiGO', margin, 18);
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(158, 239, 229);       // brand-aqua
+            doc.text('EARNINGS & PAYOUT STATEMENT', margin, 26);
+
+            // Generated date top-right
+            const now = new Date();
+            doc.setFontSize(8);
+            doc.setTextColor(158, 239, 229);
+            doc.text(`Generated: ${now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, pageW - margin, 18, { align: 'right' });
+            doc.text(`${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`, pageW - margin, 25, { align: 'right' });
+
+            y = 52;
+
+            // ── Summary Cards ─────────────────────────────────────────────
+            const cardW = (contentW - 8) / 3;
+
+            // Card helper
+            const drawCard = (x, cardY, label, value, accent) => {
+                doc.setFillColor(...accent);
+                doc.roundedRect(x, cardY, cardW, 22, 3, 3, 'F');
+                doc.setTextColor(22, 37, 33);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.text(value, x + cardW / 2, cardY + 13, { align: 'center' });
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(30, 60, 50);
+                doc.text(label.toUpperCase(), x + cardW / 2, cardY + 19, { align: 'center' });
+            };
+
+            drawCard(margin, y, 'Total Earned', `\u20B9${processedEarnings.toLocaleString('en-IN')}`, [79, 239, 169]);
+            drawCard(margin + cardW + 4, y, 'Transactions', `${payouts.length}`, [79, 124, 172]);
+            drawCard(margin + (cardW + 4) * 2, y, 'Status', 'Approved', [158, 239, 229]);
+
+            y += 30;
+
+            // ── Section Title ─────────────────────────────────────────────
+            doc.setFillColor(240, 248, 245);
+            doc.rect(margin, y, contentW, 8, 'F');
+            doc.setTextColor(22, 37, 33);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.text('PAYOUT HISTORY', margin + 3, y + 5.5);
+            y += 12;
+
+            // ── Table Header ──────────────────────────────────────────────
+            const cols = [
+                { label: 'ITEM', x: margin, w: 52 },
+                { label: 'RENTER', x: margin + 52, w: 40 },
+                { label: 'FROM', x: margin + 92, w: 28 },
+                { label: 'TO', x: margin + 120, w: 28 },
+                { label: 'DEPOSIT', x: margin + 148, w: 20 },
+                { label: 'EARNED', x: margin + 168, w: 24 },
+            ];
+
+            // Header row
+            doc.setFillColor(22, 37, 33);
+            doc.rect(margin, y, contentW, 7, 'F');
+            doc.setTextColor(192, 224, 210);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            cols.forEach(col => doc.text(col.label, col.x + 2, y + 4.8));
+            y += 9;
+
+            // ── Table Rows ────────────────────────────────────────────────
+            const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+            const fmtRupee = (n) => n > 0 ? `\u20B9${Number(n).toLocaleString('en-IN')}` : '—';
+
+            payouts.forEach((req, idx) => {
+                if (y > 265) {
+                    doc.addPage();
+                    y = 20;
+                }
+
+                const prod = req.product || {};
+                const renter = req.renter || {};
+                const isEven = idx % 2 === 0;
+
+                if (isEven) {
+                    doc.setFillColor(247, 252, 249);
+                    doc.rect(margin, y - 1, contentW, 8, 'F');
+                }
+
+                doc.setTextColor(22, 37, 33);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+
+                const truncate = (str, maxLen) => {
+                    if (!str) return '—';
+                    return str.length > maxLen ? str.slice(0, maxLen - 1) + '…' : str;
+                };
+
+                doc.text(truncate(prod.title || 'Unknown Item', 28), margin + 2, y + 4);
+                doc.text(truncate(renter.name || renter.email || 'User', 22), margin + 54, y + 4);
+                doc.text(fmtDate(req.startDate), margin + 94, y + 4);
+                doc.text(fmtDate(req.endDate), margin + 122, y + 4);
+                doc.text(fmtRupee(prod.securityDeposit), margin + 150, y + 4);
+
+                // Earned amount in green
+                doc.setTextColor(34, 139, 86);
+                doc.setFont('helvetica', 'bold');
+                doc.text(fmtRupee(req.totalPrice), margin + 170, y + 4);
+                doc.setTextColor(22, 37, 33);
+                doc.setFont('helvetica', 'normal');
+
+                y += 9;
+            });
+
+            if (payouts.length === 0) {
+                doc.setTextColor(120, 150, 140);
+                doc.setFontSize(9);
+                doc.text('No payout history available.', margin, y + 6);
+                y += 14;
+            }
+
+            // ── Totals Row ────────────────────────────────────────────────
+            y += 2;
+            doc.setFillColor(22, 37, 33);
+            doc.rect(margin, y, contentW, 9, 'F');
+            doc.setTextColor(192, 224, 210);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            doc.text('TOTAL', margin + 2, y + 6);
+            doc.setTextColor(79, 239, 169);
+            doc.text(`\u20B9${processedEarnings.toLocaleString('en-IN')}`, margin + 170, y + 6);
+
+            // ── Footer ────────────────────────────────────────────────────
+            y += 16;
+            doc.setDrawColor(200, 220, 210);
+            doc.setLineWidth(0.3);
+            doc.line(margin, y, pageW - margin, y);
+            y += 5;
+            doc.setTextColor(150, 180, 165);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.text('This is a system-generated statement from RentiGO. All amounts are in Indian Rupees (INR).', margin, y);
+            doc.text('Secured by RentiGO Escrow — payments verified and held for community safety.', margin, y + 4);
+
+            // Save
+            const fileName = `RentiGO_Earnings_${now.toLocaleDateString('en-IN').replace(/\//g, '-')}.pdf`;
+            doc.save(fileName);
+        } catch (err) {
+            console.error('PDF export failed:', err);
+            alert('Could not generate PDF. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     if (userRole === 'renter') {
         return (
             <div className="pt-28 pb-32 animate-fade-in min-h-screen">
@@ -59,7 +230,7 @@ export default function Earnings() {
                         title="Earnings is for Lenders"
                         description="Switch to 'Lending' mode in the navigation bar to start earning money by sharing your gear with neighbors."
                         action={
-                            <Button variant="primary" onClick={() => navigate('/list-item')}>
+                            <Button variant="primary" onClick={() => navigate('/dashboard')}>
                                 List your first Item
                             </Button>
                         }
@@ -87,8 +258,11 @@ export default function Earnings() {
                         </h1>
                     </div>
 
-                    <Button variant="outline" size="md" className="!rounded-[2rem] shadow-xl">
-                        <Download size={18} /> Export Statement
+                    <Button variant="outline" size="md" className="!rounded-[2rem] shadow-xl" onClick={exportPDF} disabled={exporting}>
+                        {exporting
+                            ? <><Loader2 size={16} className="animate-spin" /> Generating...</>
+                            : <><Download size={18} /> Export Statement</>
+                        }
                     </Button>
                 </div>
 

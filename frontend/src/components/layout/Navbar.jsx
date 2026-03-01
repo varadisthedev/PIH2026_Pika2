@@ -26,7 +26,7 @@ const LENDER_LINKS = [
 
 export default function Navbar() {
     const { isDark, toggleTheme } = useTheme();
-    const { userRole, toggleRole, userProfile, notifications } = useRental();
+    const { userRole, toggleRole } = useRental();
     const [scrolled, setScrolled] = useState(false);
     const [showListModal, setShowListModal] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);

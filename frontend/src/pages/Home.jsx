@@ -6,6 +6,7 @@ import ItemCard from '../components/items/ItemCard.jsx';
 import { LoadingGrid, ErrorState } from '../components/items/ItemStates.jsx';
 import Container from '../components/layout/Container.jsx';
 import Button from '../components/ui/Button.jsx';
+import { useRental } from '../context/RentalContext.jsx';
 
 const CATEGORIES = [
     { name: 'Everyday Essentials', icon: Package, color: 'bg-blue-500/10 text-blue-500' },
@@ -34,6 +35,7 @@ export default function Home() {
     const [error, setError] = useState(null);
     const [showStickyCTA, setShowStickyCTA] = useState(false);
     const navigate = useNavigate();
+    const { setUserRole } = useRental();
 
     useEffect(() => {
         api.get('/products', { params: { limit: 4 } })
@@ -215,7 +217,15 @@ export default function Home() {
                             <p className="text-lg text-brand-teal/70 dark:text-brand-aqua/60 leading-relaxed mb-10 font-bold">
                                 Turn your tools, cameras, and gear into passive income. Your items are protected and our community is verified.
                             </p>
-                            <Button variant="primary" size="lg" onClick={() => navigate('/list-item')} className="shadow-2xl shadow-brand-green/20">
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                onClick={() => {
+                                    setUserRole('lender');
+                                    navigate('/dashboard');
+                                }}
+                                className="shadow-2xl shadow-brand-green/20"
+                            >
                                 <Users size={20} /> Start Hosting Today
                             </Button>
                         </div>

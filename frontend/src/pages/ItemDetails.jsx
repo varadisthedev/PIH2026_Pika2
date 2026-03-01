@@ -55,7 +55,7 @@ function DetailSkeleton() {
 export default function ItemDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { addBooking, wishlist, toggleWishlist, addToRecentlyViewed, addNotification } = useRental();
+    const { wishlist, toggleWishlist, addToRecentlyViewed } = useRental();
     const { getToken, isSignedIn } = useAuth();
     const [item, setItem] = useState(null);
     const [similarItems, setSimilarItems] = useState([]);
@@ -192,15 +192,7 @@ export default function ItemDetails() {
                             headers: { Authorization: `Bearer ${token}` }
                         });
 
-                        // 6. Update successful state locally
-                        addBooking(item, {
-                            startDate,
-                            endDate,
-                            totalCost,
-                            securityDeposit,
-                            status: 'approved'
-                        });
-
+                        // 6. Navigate to dashboard — backend already recorded rental
                         setConfirming(false);
                         setConfirmed(true);
                         setTimeout(() => {

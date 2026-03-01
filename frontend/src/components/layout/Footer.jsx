@@ -11,7 +11,7 @@ const FOOTER_LINKS = {
         { label: 'How it Works', to: '/' },
     ],
     Lend: [
-        { label: 'List an Item', to: '/list-item' },
+        { label: 'List an Item', to: '/dashboard' },
         { label: 'My Listings', to: '/my-listings' },
         { label: 'Hosting Tools', to: '/my-listings' },
         { label: 'SafeShare Guarantee', to: '/' },

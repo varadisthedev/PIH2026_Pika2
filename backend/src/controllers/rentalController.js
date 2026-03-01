@@ -1,5 +1,6 @@
 import Rental from '../models/Rental.js';
 import Product from '../models/Product.js';
+import { createNotification } from './notificationController.js';
 
 // POST /api/rentals  (buyer only)
 export const createRental = async (req, res) => {
@@ -46,6 +47,17 @@ export const createRental = async (req, res) => {
         });
 
         console.log(`✅ [rentalController] Rental created: ${rental._id}`);
+
+        // Notify the product owner about the new request
+        if (product.owner) {
+            await createNotification(
+                product.owner,
+                `📦 New rental request for "${product.title}" — check your dashboard to approve or decline.`,
+                'info',
+                '/dashboard'
+            );
+        }
+
         res.status(201).json({ message: 'Rental request submitted', rental });
     } catch (error) {
         console.error('❌ [rentalController] createRental error:', error.message);
@@ -131,6 +143,19 @@ export const updateRentalStatus = async (req, res) => {
         rental.status = status;
         await rental.save();
 
+        // Notify renter
+        const statusMessages = {
+            approved: `✅ Your rental request for "${rental.product.title}" was approved! Coordinate pickup with the owner.`,
+            rejected: `❌ Your rental request for "${rental.product.title}" was declined by the owner.`,
+            completed: `🎉 Rental of "${rental.product.title}" marked as completed. Thank you!`,
+        };
+        await createNotification(rental.renter, statusMessages[status] || `Rental status updated to ${status}.`, status === 'approved' ? 'success' : status === 'rejected' ? 'error' : 'info', '/dashboard');
+
+        // Notify seller too on completion
+        if (status === 'completed') {
+            await createNotification(sellerDbUser._id, `Rental of "${rental.product.title}" has been marked completed.`, 'success', '/earnings');
+        }
+
         console.log(`✅ [rentalController] Rental ${id} status updated to: ${status}`);
         res.status(200).json({ message: `Rental ${status}`, rental });
     } catch (error) {
@@ -164,6 +189,13 @@ export const cancelRental = async (req, res) => {
 
         rental.status = 'cancelled';
         await rental.save();
+
+        // Notify renter
+        await createNotification(renterDbUser._id, `Your rental request has been cancelled.`, 'info', '/dashboard');
+        // Notify seller
+        if (rental.product?.owner) {
+            await createNotification(rental.product.owner, `A rental request for "${rental.product.title}" was cancelled by the renter.`, 'info', '/dashboard');
+        }
 
         console.log(`✅ [rentalController] Rental ${id} status updated to: cancelled`);
         res.status(200).json({ message: 'Rental cancelled', rental });

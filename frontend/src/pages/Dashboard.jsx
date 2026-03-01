@@ -25,7 +25,7 @@ const STATUS_COLOR = {
 };
 
 /* ── Renter's incoming rental card ── */
-function RequestCard({ req, onCancel }) {
+function RequestCard({ req, onCancel, confirmId, setConfirmId }) {
     const product = req.product || {};
     return (
         <div className="glass-card rounded-2xl p-4 flex gap-4 items-start card-hover">
@@ -50,11 +50,25 @@ function RequestCard({ req, onCancel }) {
                     </span>
                 </div>
                 {(req.status === 'pending' || req.status === 'approved') && (
-                    <div className="mt-3 flex justify-end">
-                        <button onClick={() => onCancel(req._id)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-300 dark:border-red-400/30 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                            Cancel Request
-                        </button>
+                    <div className="mt-3 flex justify-end gap-2">
+                        {confirmId === `cancel-${req._id}` ? (
+                            <>
+                                <span className="text-[10px] font-bold text-red-500 self-center">Cancel this request?</span>
+                                <button onClick={() => onCancel(req._id)}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-colors">
+                                    Yes
+                                </button>
+                                <button onClick={() => setConfirmId(null)}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold border border-brand-teal/20 text-brand-teal dark:text-brand-aqua hover:bg-brand-teal/5 transition-colors">
+                                    No
+                                </button>
+                            </>
+                        ) : (
+                            <button onClick={() => setConfirmId(`cancel-${req._id}`)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-300 dark:border-red-400/30 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                Cancel Request
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -149,6 +163,7 @@ export default function Dashboard() {
     const [editForm, setEditForm] = useState({});
     const [imageUploading, setImageUploading] = useState(false);
     const [updateSaving, setUpdateSaving] = useState(false);
+    const [confirmId, setConfirmId] = useState(null); // inline confirm pattern
 
     const loadData = useCallback(async () => {
         if (!isSignedIn) return;
@@ -193,20 +208,29 @@ export default function Dashboard() {
     };
 
     const handleCancelRequest = async (rentalId) => {
-        if (!window.confirm('Are you sure you want to cancel this request?')) return;
+        if (confirmId !== `cancel-${rentalId}`) {
+            setConfirmId(`cancel-${rentalId}`);
+            return;
+        }
+        setConfirmId(null);
         try {
             const token = await getToken();
             await api.patch(`/rentals/${rentalId}/cancel`, {}, withToken(token));
             console.log(`✅ [Dashboard] Rental ${rentalId} cancelled`);
             setMyRentals(prev => prev.map(r => r._id === rentalId ? { ...r, status: 'cancelled' } : r));
+            showToast('Request cancelled', 'success');
         } catch (err) {
             console.error('❌ [Dashboard] Cancel failed:', err.message);
-            alert(err.response?.data?.error || 'Failed to cancel request');
+            showToast(err.response?.data?.error || 'Failed to cancel request', 'error');
         }
     };
 
     const handleDeleteListing = async (productId) => {
-        if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+        if (confirmId !== `delete-${productId}`) {
+            setConfirmId(`delete-${productId}`);
+            return;
+        }
+        setConfirmId(null);
         const removed = myListings.find(p => p._id === productId);
         // Optimistic
         setMyListings(prev => prev.filter(p => p._id !== productId));
@@ -390,10 +414,10 @@ export default function Dashboard() {
                         {myRentals.length === 0 ? (
                             <EmptyState icon={Clock} title="No rentals yet"
                                 description="You haven't rented anything yet. Start browsing!"
-                                action={<Button variant="primary" onClick={() => window.location.href = '/browse'}>Browse Items <ArrowRight size={15} /></Button>} />
+                                action={<Button variant="primary" onClick={() => navigate('/browse')}>Browse Items <ArrowRight size={15} /></Button>} />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {myRentals.map(req => <RequestCard key={req._id} req={req} onCancel={handleCancelRequest} />)}
+                                {myRentals.map(req => <RequestCard key={req._id} req={req} onCancel={handleCancelRequest} confirmId={confirmId} setConfirmId={setConfirmId} />)}
                             </div>
                         )}
                     </div>
@@ -469,19 +493,39 @@ export default function Dashboard() {
                                                 )}
                                             </div>
                                         </Link>
-                                        {/* Edit / Delete buttons */}
-                                        <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {/* Action buttons */}
+                                        <div className="px-4 pb-4 flex gap-2 items-center">
                                             <button
                                                 onClick={() => handleEditOpen(item)}
-                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#162521]/80 text-[#3C474B] hover:text-brand-teal dark:text-[#9EEFE5] dark:hover:text-brand-green shadow-sm backdrop-blur-sm"
-                                                title="Edit listing">
-                                                <Pencil size={13} />
+                                                className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-brand-teal/20 text-brand-teal dark:text-brand-aqua hover:bg-brand-teal/5 transition flex items-center justify-center gap-1"
+                                            >
+                                                <Pencil size={11} /> Edit
                                             </button>
-                                            <button onClick={() => handleDeleteListing(item._id)} disabled={deletingId === item._id}
-                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#162521]/80 text-red-400 hover:text-red-600 shadow-sm backdrop-blur-sm disabled:opacity-50"
-                                                title="Delete listing">
-                                                {deletingId === item._id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                                            </button>
+                                            {confirmId === `delete-${item._id}` ? (
+                                                <div className="flex gap-1 flex-1">
+                                                    <button
+                                                        onClick={() => handleDeleteListing(item._id)}
+                                                        className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-500 text-white hover:bg-red-600 transition"
+                                                    >
+                                                        Yes, Delete
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmId(null)}
+                                                        className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-brand-teal/20 text-brand-teal dark:text-brand-aqua hover:bg-brand-teal/5 transition"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleDeleteListing(item._id)}
+                                                    disabled={deletingId === item._id}
+                                                    className="flex-1 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-300/50 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center justify-center gap-1 disabled:opacity-40"
+                                                >
+                                                    {deletingId === item._id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                                                    Delete
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
