@@ -21,6 +21,9 @@ export const createOrder = async (req, res) => {
         }
 
         const amount = rental.totalPrice;
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ error: `Invalid rental amount: ₹${amount}. Cannot create payment order.` });
+        }
 
         console.log(`[PaymentController] Amount to pay: INR ${amount}`);
 
@@ -41,10 +44,11 @@ export const createOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[PaymentController] Error creating order:', error);
-        res.status(500).json({ error: 'Internal server error while creating payment order.' });
+        console.error('[PaymentController] Error creating order:', error.message);
+        res.status(500).json({ error: error.message || 'Internal server error while creating payment order.' });
     }
 };
+
 
 export const verifyPayment = async (req, res) => {
     try {

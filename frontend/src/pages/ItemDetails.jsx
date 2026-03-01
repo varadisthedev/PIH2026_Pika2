@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Star, IndianRupee, Calendar, User, ArrowLeft, CheckCircle2, XCircle, ImageOff,
     ShieldCheck, Info, MessageSquare, Clock, Share2, Heart, ChevronRight, AlertCircle,
-    Package, CreditCard, Lock, Flag, ExternalLink, Loader2
+    Package, CreditCard, Lock, Flag, ExternalLink, Loader2, BookCheck, ArrowRight, Bookmark
 } from 'lucide-react';
 import api from '../api/axios.js';
 import { useRental } from '../context/RentalContext.jsx';
@@ -66,6 +66,7 @@ export default function ItemDetails() {
     const [confirmed, setConfirmed] = useState(false);
     const [rentalError, setRentalError] = useState('');
     const [connecting, setConnecting] = useState(false);
+    const [bookingGuide, setBookingGuide] = useState(null); // {rentalId} — guides user after booking
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -137,94 +138,37 @@ export default function ItemDetails() {
         });
     };
 
-    const handleBooking = async () => {
+    // ── Book Now: creates rental, does NOT take payment here ─────────────────
+    const handleBookNow = async () => {
         if (!isSignedIn) {
-            setRentalError('Please sign in to rent items.');
+            setRentalError('Please sign in to book items.');
             return;
         }
-
         setConfirming(true);
         setRentalError('');
-
         try {
             const token = await getToken();
-
-            // 1. Create Rental record (Pending)
             const rentalRes = await api.post('/rentals', {
                 productId: itemId,
                 startDate,
                 endDate
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const rentalId = rentalRes.data.rental._id;
-
-            // 2. Load Razorpay Script
-            const scriptLoaded = await loadRazorpayScript();
-            if (!scriptLoaded) {
-                throw new Error('Razorpay SDK failed to load. Are you connected to the internet?');
-            }
-
-            // 3. Create Razorpay Order via Backend
-            const orderRes = await api.post('/payments/create-order', {
-                rentalId
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const { orderId, amount, keyId } = orderRes.data;
-
-            // 4. Open Razorpay Checkout Options
-            const options = {
-                key: keyId,
-                amount: amount,
-                currency: 'INR',
-                name: 'RentiGO',
-                description: 'Rental Payment for ' + item.title,
-                order_id: orderId,
-                handler: async function (response) {
-                    try {
-                        // 5. Verify payment signature
-                        await api.post('/payments/verify', {
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature
-                        }, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
-
-                        // 6. Navigate to My Bookings — backend already recorded rental
-                        setConfirming(false);
-                        setConfirmed(true);
-                        setTimeout(() => {
-                            setBookingModalOpen(false);
-                            navigate('/my-bookings');
-                        }, 1500);
-
-                    } catch (verifyError) {
-                        console.error('Payment verification failed:', verifyError);
-                        setRentalError('Payment verification failed. Please contact support.');
-                        setConfirming(false);
-                    }
-                },
-                theme: {
-                    color: '#007EA7'
-                }
-            };
-
-            const rzp = new window.Razorpay(options);
-            rzp.on('payment.failed', function (response) {
-                console.error('Payment failed:', response.error);
-                setRentalError(response.error.description);
-                setConfirming(false);
-            });
-            rzp.open();
-
+            }, { headers: { Authorization: `Bearer ${token}` } });
+            const rental = rentalRes.data.rental;
+            setConfirming(false);
+            setConfirmed(true);
+            // Show guiding popup, then close modal after a moment
+            setBookingGuide({ rentalId: rental._id, title: item.title });
+            setTimeout(() => {
+                setBookingModalOpen(false);
+                setConfirmed(false);
+            }, 2000);
         } catch (e) {
-            console.error('Rental error:', e.response?.data || e.message);
-            setRentalError(e.response?.data?.error || e.message || 'Failed to process booking. Try again.');
+            console.error('Booking error:', e.response?.data || e.message);
+            setRentalError(e.response?.data?.error || e.message || 'Failed to create booking. Try again.');
             setConfirming(false);
         }
     };
+
 
     const handleMessageSeller = async () => {
         if (!isSignedIn) {
@@ -546,17 +490,21 @@ export default function ItemDetails() {
             {/* BOOKING + CONFIRMATION MODAL */}
             <Modal isOpen={bookingModalOpen} onClose={() => !confirming && setBookingModalOpen(false)} title="Rental Confirmation">
                 {confirmed ? (
-                    <div className="text-center py-12 space-y-6 animate-fade-in">
-                        <div className="w-20 h-20 rounded-full bg-brand-green/15 flex items-center justify-center mx-auto ring-4 ring-brand-green/20">
-                            <CheckCircle2 size={44} className="text-brand-green" />
+                    <div className="text-center py-10 space-y-5 animate-fade-in">
+                        <div className="w-18 h-18 rounded-full bg-brand-green/15 flex items-center justify-center mx-auto ring-4 ring-brand-green/20">
+                            <BookCheck size={40} className="text-brand-green" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black text-brand-dark dark:text-white tracking-tighter mb-2">Payment Successful!</h3>
+                            <h3 className="text-xl font-black text-brand-dark dark:text-white tracking-tighter mb-2">Booking Requested!</h3>
                             <p className="text-sm font-bold text-brand-dark/60 dark:text-brand-frost/60 max-w-[280px] mx-auto">
-                                Your rental is confirmed. The owner has been notified.
+                                Your request has been sent to the owner.
                             </p>
                         </div>
-                        <div className="text-[11px] font-black text-brand-green uppercase tracking-widest">Redirecting to My Bookings…</div>
+                        <div className="p-3 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/10">
+                            <p className="text-[10px] font-black text-brand-dark/70 dark:text-brand-frost/60 uppercase tracking-widest">
+                                📍 Find it in Dashboard → My Rentals → Pay Now
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -643,16 +591,16 @@ export default function ItemDetails() {
                                 onClick={() => setBookingModalOpen(false)}
                                 disabled={confirming}
                             >
-                                Back
+                                Cancel
                             </Button>
                             <Button
                                 variant="primary" size="sm" className="flex-1 !rounded-xl shadow-lg shadow-brand-green/20"
-                                onClick={handleBooking}
+                                onClick={handleBookNow}
                                 disabled={confirming}
                             >
                                 {confirming
-                                    ? <><Loader2 size={14} className="animate-spin mr-1.5" />Processing…</>
-                                    : <><Lock size={14} className="mr-1" />Confirm &amp; Pay</>}
+                                    ? <><Loader2 size={14} className="animate-spin mr-1.5" />Booking…</>
+                                    : <><Bookmark size={14} className="mr-1" />Book Now</>}
                             </Button>
                         </div>
 
@@ -660,24 +608,46 @@ export default function ItemDetails() {
                 )}
             </Modal>
 
-            {/* Mobile Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden p-4 bg-white/80 dark:bg-brand-dark/80 backdrop-blur-xl border-t border-brand-teal/10">
-                <div className="flex items-center justify-between gap-6 max-w-lg mx-auto">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Price</span>
-                        <span className="text-xl font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">₹{totalCost.toLocaleString('en-IN')}</span>
+            {/* Guiding Popup — appears after 'Book Now' to tell user where to pay */}
+            {bookingGuide && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[92vw] max-w-sm animate-fade-up">
+                    <div className="glass-card rounded-2xl p-4 border border-brand-green/30 shadow-2xl shadow-brand-green/10">
+                        <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-brand-green/20 flex items-center justify-center shrink-0 mt-0.5">
+                                <BookCheck size={20} className="text-brand-green" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-black text-brand-dark dark:text-white tracking-tight leading-snug mb-1">
+                                    Booking request sent! 🎉
+                                </p>
+                                <p className="text-[10px] font-bold text-brand-dark/60 dark:text-brand-frost/60 uppercase tracking-wide leading-relaxed">
+                                    Go to <strong>Dashboard → My Rentals</strong> to pay &amp; confirm your booking.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setBookingGuide(null)}
+                                className="p-1 rounded-lg text-brand-teal/40 hover:text-brand-dark dark:hover:text-white transition-colors shrink-0"
+                            >
+                                <XCircle size={16} />
+                            </button>
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                            <button
+                                onClick={() => { setBookingGuide(null); navigate('/dashboard'); }}
+                                className="flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-brand-dark text-white dark:bg-brand-green dark:text-brand-dark hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
+                            >
+                                Go to Dashboard <ArrowRight size={13} />
+                            </button>
+                            <button
+                                onClick={() => setBookingGuide(null)}
+                                className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-brand-teal/20 text-brand-dark/60 dark:text-brand-frost/60 hover:bg-brand-teal/5 transition-colors"
+                            >
+                                Stay Here
+                            </button>
+                        </div>
                     </div>
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        className="flex-1 !rounded-2xl shadow-xl shadow-brand-green/20"
-                        onClick={() => setBookingModalOpen(true)}
-                        disabled={!isAvailable}
-                    >
-                        {isAvailable ? 'Confirm & Pay' : 'Rented'}
-                    </Button>
                 </div>
-            </div>
+            )}
         </div>
     );
 }
