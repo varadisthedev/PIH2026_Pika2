@@ -18,13 +18,14 @@ const STATUS_ICON = {
     approved:  <CheckCircle2 size={14} />,
     completed: <RotateCcw size={14} />,
     rejected:  <XCircle size={14} />,
+    cancelled: <XCircle size={14} />,
 };
 const STATUS_COLOR = {
-    pending: 'pending', approved: 'success', completed: 'info', rejected: 'error',
+    pending: 'pending', approved: 'success', completed: 'info', rejected: 'error', cancelled: 'error',
 };
 
 /* ── Renter's incoming rental card ── */
-function RequestCard({ req }) {
+function RequestCard({ req, onCancel }) {
     const product = req.product || {};
     return (
         <div className="glass-card rounded-2xl p-4 flex gap-4 items-start card-hover">
@@ -48,6 +49,14 @@ function RequestCard({ req }) {
                         <IndianRupee size={11} /> {req.totalPrice?.toLocaleString('en-IN')}
                     </span>
                 </div>
+                {(req.status === 'pending' || req.status === 'approved') && (
+                    <div className="mt-3 flex justify-end">
+                        <button onClick={() => onCancel(req._id)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-300 dark:border-red-400/30 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                            Cancel Request
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -179,6 +188,19 @@ export default function Dashboard() {
         }
     };
 
+    const handleCancelRequest = async (rentalId) => {
+        if (!window.confirm('Are you sure you want to cancel this request?')) return;
+        try {
+            const token = await getToken();
+            await api.patch(`/rentals/${rentalId}/cancel`, {}, withToken(token));
+            console.log(`✅ [Dashboard] Rental ${rentalId} cancelled`);
+            setMyRentals(prev => prev.map(r => r._id === rentalId ? { ...r, status: 'cancelled' } : r));
+        } catch (err) {
+            console.error('❌ [Dashboard] Cancel failed:', err.message);
+            alert(err.response?.data?.error || 'Failed to cancel request');
+        }
+    };
+
     const handleDeleteListing = async (productId) => {
         if (!window.confirm('Delete this listing? This cannot be undone.')) return;
         setDeletingId(productId);
@@ -305,7 +327,7 @@ export default function Dashboard() {
                                 action={<Button variant="primary" onClick={() => window.location.href = '/browse'}>Browse Items <ArrowRight size={15} /></Button>} />
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {myRentals.map(req => <RequestCard key={req._id} req={req} />)}
+                                {myRentals.map(req => <RequestCard key={req._id} req={req} onCancel={handleCancelRequest} />)}
                             </div>
                         )}
                     </div>
