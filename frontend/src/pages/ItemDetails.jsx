@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     MapPin, Star, IndianRupee, Calendar, User, ArrowLeft, CheckCircle2, XCircle, ImageOff,
     ShieldCheck, Info, MessageSquare, Clock, Share2, Heart, ChevronRight, AlertCircle,
-    Package, CreditCard, Lock, Flag, ExternalLink, Loader2, BookCheck, ArrowRight, Bookmark
+    Package, CreditCard, Lock, Flag, ExternalLink, Loader2, BookCheck, ArrowRight, Bookmark, Pencil
 } from 'lucide-react';
 import api from '../api/axios.js';
 import { useRental } from '../context/RentalContext.jsx';
@@ -13,7 +13,8 @@ import Button from '../components/ui/Button.jsx';
 import Container from '../components/layout/Container.jsx';
 import Card from '../components/ui/Card.jsx';
 import ItemCard from '../components/items/ItemCard.jsx';
-import { useAuth } from '@clerk/clerk-react';
+import getImageUrl from '../utils/imageUrl.js';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
 import L from 'leaflet';
 import { LoadingGrid, EmptyState, ErrorState } from '../components/items/ItemStates.jsx';
@@ -57,6 +58,7 @@ export default function ItemDetails() {
     const navigate = useNavigate();
     const { wishlist, toggleWishlist, addToRecentlyViewed } = useRental();
     const { getToken, isSignedIn } = useAuth();
+    const { user } = useUser();
     const [item, setItem] = useState(null);
     const [similarItems, setSimilarItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export default function ItemDetails() {
     const [confirmed, setConfirmed] = useState(false);
     const [rentalError, setRentalError] = useState('');
     const [connecting, setConnecting] = useState(false);
-    const [bookingGuide, setBookingGuide] = useState(null); // {rentalId} — guides user after booking
+    const [paying, setPaying] = useState(false);
 
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [reportModalOpen, setReportModalOpen] = useState(false);
@@ -110,13 +112,15 @@ export default function ItemDetails() {
 
     // Data normalization
     const itemId = item._id || item.id;
-    const productImages = (item.images && item.images.length > 0) ? item.images : (item.image ? [item.image] : []);
+    const productImages = ((item.images && item.images.length > 0) ? item.images : (item.image ? [item.image] : [])).map(getImageUrl);
     const imgSrc = productImages[selectedImage] || productImages[0];
     const isAvailable = item.availability ?? item.available ?? true;
     const ownerName = item.owner?.name || 'Local Neighbor';
     const ownerEmail = item.owner?.email || 'Hidden Email';
     const displayLocation = typeof item.location === 'string' ? item.location : (item.location?.address || 'Local Neighborhood');
     const displayDistance = item.distanceKm || item.distance || null;
+
+    const isOwner = user && (user.primaryEmailAddress?.emailAddress === item.ownerEmail || user.primaryEmailAddress?.emailAddress === item.owner?.email || user.id === item.owner?.id);
 
     const days = Math.max(1, Math.ceil((new Date(endDate) - new Date(startDate)) / 86400000));
     const securityDeposit = Math.round(item.pricePerDay * 2);
@@ -138,7 +142,7 @@ export default function ItemDetails() {
         });
     };
 
-    // ── Book Now: creates rental, does NOT take payment here ─────────────────
+    // ── Book Now: creates rental, then immediately opens Razorpay ────────────
     const handleBookNow = async () => {
         if (!isSignedIn) {
             setRentalError('Please sign in to book items.');
@@ -147,25 +151,86 @@ export default function ItemDetails() {
         setConfirming(true);
         setRentalError('');
         try {
+            // Step 1: Load Razorpay SDK in the background
+            const scriptLoaded = await loadRazorpayScript();
+            if (!scriptLoaded) {
+                setRentalError('Unable to load payment processor. Check your connection and try again.');
+                setConfirming(false);
+                return;
+            }
+
             const token = await getToken();
+
+            // Step 2: Create rental record
             const rentalRes = await api.post('/rentals', {
                 productId: itemId,
                 startDate,
                 endDate
             }, { headers: { Authorization: `Bearer ${token}` } });
             const rental = rentalRes.data.rental;
+
+            // Step 3: Create Razorpay order
+            setPaying(true);
             setConfirming(false);
-            setConfirmed(true);
-            // Show guiding popup, then close modal after a moment
-            setBookingGuide({ rentalId: rental._id, title: item.title });
-            setTimeout(() => {
-                setBookingModalOpen(false);
-                setConfirmed(false);
-            }, 2000);
+            const orderRes = await api.post('/payments/create-order', { rentalId: rental._id }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const { orderId, amount, keyId } = orderRes.data;
+
+            // Step 4: Open Razorpay Checkout
+            const options = {
+                key: keyId,
+                amount: amount * 100,          // Razorpay expects paise
+                currency: 'INR',
+                name: 'RentiGO',
+                description: `Rental: ${item.title}`,
+                order_id: orderId,
+                prefill: {},
+                theme: { color: '#007EA7' },
+                handler: async function (response) {
+                    try {
+                        // Step 5: Verify signature on backend
+                        await api.post('/payments/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        }, { headers: { Authorization: `Bearer ${token}` } });
+
+                        setPaying(false);
+                        setConfirmed(true);
+                        setTimeout(() => {
+                            setBookingModalOpen(false);
+                            setConfirmed(false);
+                            navigate('/dashboard');
+                        }, 2500);
+                    } catch (verifyErr) {
+                        console.error('Payment verification failed:', verifyErr);
+                        setRentalError('Payment verification failed. Please contact support.');
+                        setPaying(false);
+                    }
+                },
+                modal: {
+                    ondismiss: () => {
+                        // User closed Razorpay — rental exists as pending, they can pay from Dashboard
+                        setPaying(false);
+                        setRentalError('Payment cancelled. You can complete payment anytime from your Dashboard.');
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', (response) => {
+                console.error('Payment failed:', response.error);
+                setRentalError(response.error.description || 'Payment failed. Please try again.');
+                setPaying(false);
+            });
+            rzp.open();
+
         } catch (e) {
-            console.error('Booking error:', e.response?.data || e.message);
-            setRentalError(e.response?.data?.error || e.message || 'Failed to create booking. Try again.');
+            console.error('Booking/payment error:', e.response?.data || e.message);
+            setRentalError(e.response?.data?.error || e.message || 'Failed to process. Please try again.');
             setConfirming(false);
+            setPaying(false);
         }
     };
 
@@ -381,8 +446,26 @@ export default function ItemDetails() {
 
                     {/* Right Column: Checkout Sidebar */}
                     <aside className="sticky top-32 space-y-6">
-                        <Card variant="glass" className="!p-8 shadow-2xl !rounded-[2.5rem] border-brand-green/20">
-                            <div className="flex items-baseline gap-2 mb-8">
+                        {isOwner ? (
+                            <Card variant="glass" className="!p-8 shadow-2xl !rounded-[2.5rem] border-brand-teal/20 text-center">
+                                <div className="w-16 h-16 rounded-full bg-brand-teal/10 flex items-center justify-center mx-auto mb-4">
+                                    <Package size={28} className="text-brand-teal" />
+                                </div>
+                                <h3 className="text-xl font-black text-brand-dark dark:text-brand-frost tracking-tighter uppercase mb-6">Manage Listing</h3>
+                                <p className="text-xs font-bold text-text-secondary mb-6 leading-relaxed">You are the owner of this item. You can edit the item details, price, and images from your dashboard.</p>
+                                <Button
+                                    variant="primary"
+                                    size="lg"
+                                    className="w-full !rounded-2xl shadow-xl shadow-brand-teal/20 flex items-center justify-center gap-2"
+                                    onClick={() => navigate('/dashboard', { state: { editItem: item } })}
+                                >
+                                    <Pencil size={18} /> Edit Item Settings
+                                </Button>
+                            </Card>
+                        ) : (
+                            <>
+                                <Card variant="glass" className="!p-8 shadow-2xl !rounded-[2.5rem] border-brand-green/20">
+                                    <div className="flex items-baseline gap-2 mb-8">
                                 <span className="text-4xl font-black text-brand-dark dark:text-brand-frost">₹{item.pricePerDay?.toLocaleString('en-IN')}</span>
                                 <span className="text-xs font-black uppercase tracking-[0.2em] text-text-muted">/ day</span>
                             </div>
@@ -446,7 +529,7 @@ export default function ItemDetails() {
                         <Card variant="default" className="!p-6 !rounded-[2rem]">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-14 h-14 rounded-2xl overflow-hidden glass-card bg-brand-teal/5">
-                                    <img src={item.ownerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerName}`} alt="" className="w-full h-full object-cover" />
+                                    <img src={getImageUrl(item.ownerAvatar) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ownerName}`} alt="" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 overflow-hidden">
                                     <div className="flex items-center justify-between">
@@ -466,6 +549,8 @@ export default function ItemDetails() {
                                 {connecting ? <><Loader2 size={14} className="animate-spin" /> Connecting...</> : <><MessageSquare size={14} /> Message Neighbor</>}
                             </Button>
                         </Card>
+                            </>
+                        )}
                     </aside>
                 </div>
 
@@ -495,14 +580,14 @@ export default function ItemDetails() {
                             <BookCheck size={40} className="text-brand-green" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-brand-dark dark:text-white tracking-tighter mb-2">Booking Requested!</h3>
+                            <h3 className="text-xl font-black text-brand-dark dark:text-white tracking-tighter mb-2">Payment Confirmed! 🎉</h3>
                             <p className="text-sm font-bold text-brand-dark/60 dark:text-brand-frost/60 max-w-[280px] mx-auto">
-                                Your request has been sent to the owner.
+                                Your booking is confirmed and payment is secured. Redirecting to dashboard…
                             </p>
                         </div>
-                        <div className="p-3 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/10">
-                            <p className="text-[10px] font-black text-brand-dark/70 dark:text-brand-frost/60 uppercase tracking-widest">
-                                📍 Find it in Dashboard → My Rentals → Pay Now
+                        <div className="p-3 rounded-xl bg-brand-green/10 border border-brand-green/20">
+                            <p className="text-[10px] font-black text-brand-green uppercase tracking-widest">
+                                ✅ Payment verified · Rental approved
                             </p>
                         </div>
                     </div>
@@ -589,65 +674,26 @@ export default function ItemDetails() {
                             <Button
                                 variant="outline" size="sm" className="flex-1 !rounded-xl"
                                 onClick={() => setBookingModalOpen(false)}
-                                disabled={confirming}
+                                disabled={confirming || paying}
                             >
                                 Cancel
                             </Button>
                             <Button
                                 variant="primary" size="sm" className="flex-1 !rounded-xl shadow-lg shadow-brand-green/20"
                                 onClick={handleBookNow}
-                                disabled={confirming}
+                                disabled={confirming || paying}
                             >
                                 {confirming
-                                    ? <><Loader2 size={14} className="animate-spin mr-1.5" />Booking…</>
-                                    : <><Bookmark size={14} className="mr-1" />Book Now</>}
+                                    ? <><Loader2 size={14} className="animate-spin mr-1.5" />Creating booking…</>
+                                    : paying
+                                    ? <><Loader2 size={14} className="animate-spin mr-1.5" />Opening Payment…</>
+                                    : <><Lock size={14} className="mr-1" />Confirm & Pay ₹{totalCost.toLocaleString('en-IN')}</>}
                             </Button>
                         </div>
 
                     </div>
                 )}
             </Modal>
-
-            {/* Guiding Popup — appears after 'Book Now' to tell user where to pay */}
-            {bookingGuide && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[92vw] max-w-sm animate-fade-up">
-                    <div className="glass-card rounded-2xl p-4 border border-brand-green/30 shadow-2xl shadow-brand-green/10">
-                        <div className="flex items-start gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-brand-green/20 flex items-center justify-center shrink-0 mt-0.5">
-                                <BookCheck size={20} className="text-brand-green" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-black text-brand-dark dark:text-white tracking-tight leading-snug mb-1">
-                                    Booking request sent! 🎉
-                                </p>
-                                <p className="text-[10px] font-bold text-brand-dark/60 dark:text-brand-frost/60 uppercase tracking-wide leading-relaxed">
-                                    Go to <strong>Dashboard → My Rentals</strong> to pay &amp; confirm your booking.
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setBookingGuide(null)}
-                                className="p-1 rounded-lg text-brand-teal/40 hover:text-brand-dark dark:hover:text-white transition-colors shrink-0"
-                            >
-                                <XCircle size={16} />
-                            </button>
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                            <button
-                                onClick={() => { setBookingGuide(null); navigate('/dashboard'); }}
-                                className="flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-brand-dark text-white dark:bg-brand-green dark:text-brand-dark hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5"
-                            >
-                                Go to Dashboard <ArrowRight size={13} />
-                            </button>
-                            <button
-                                onClick={() => setBookingGuide(null)}
-                                className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-brand-teal/20 text-brand-dark/60 dark:text-brand-frost/60 hover:bg-brand-teal/5 transition-colors"
-                            >
-                                Stay Here
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

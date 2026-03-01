@@ -244,7 +244,7 @@ export default function Navbar() {
                                 )}
                             </div>
 
-                            {/* Traditional Profile Dropdown (Only if needed or to show extra info) */}
+                            {/* Traditional Profile Dropdown (Only if needed or to show extra info)
                             {isSignedIn && (
                                 <div className="relative ml-2">
                                     <button
@@ -278,7 +278,7 @@ export default function Navbar() {
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            )} */}
 
                             <button
                                 onClick={() => setMobileOpen(!mobileOpen)}

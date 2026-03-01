@@ -1,0 +1,5 @@
+26096 | "C:\Program Files\nodejs\node.exe" "C:\Program Files\nodejs/node_modules/npm/bin/npm-cli.js" run dev
+13972 | "node"   "C:\Users\varad\Desktop\road2sde\PIH2026_Pika2\backend\node_modules\.bin\\..\nodemon\bin\nodemon.js" server.js
+17212 | "C:\Program Files\nodejs\node.exe" server.js
+9088 | "C:\Program Files\nodejs\node.exe" "C:\Program Files\nodejs/node_modules/npm/bin/npm-cli.js" run dev
+14916 | "node"   "C:\Users\varad\Desktop\road2sde\PIH2026_Pika2\frontend\node_modules\.bin\\..\vite\bin\vite.js" 

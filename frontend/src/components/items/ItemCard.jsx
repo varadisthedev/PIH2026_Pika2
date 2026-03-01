@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Star, IndianRupee, ImageOff, Heart, ShieldCheck } from 'lucide-react';
 import { useRental } from '../../context/RentalContext.jsx';
+import getImageUrl from '../../utils/imageUrl.js';
 import Card from '../ui/Card.jsx';
 import Badge from '../ui/Badge.jsx';
 
@@ -26,7 +27,7 @@ export default function ItemCard({ item }) {
     } = item;
 
     const itemId = _id || id;
-    const imgSrc = (images && images[0]) || image;
+    const imgSrc = getImageUrl((images && images[0]) || image);
     const isAvailable = availability ?? available ?? true;
     const displayAddress = typeof location === 'string' ? location : (location?.address || 'Local Neighborhood');
     const displayDistance = distanceKm ?? distance ?? null;

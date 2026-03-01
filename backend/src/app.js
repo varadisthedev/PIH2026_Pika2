@@ -51,7 +51,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // ─── STATIC: serve uploaded images ────────────────────────────────────────
 // __dirname = backend/src  →  ../uploads = backend/uploads (where multer saves files)
 const uploadsDir = path.resolve(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    next();
+}, express.static(uploadsDir));
 console.log('📁 [app] Serving uploads from:', uploadsDir);
 
 // ─── CLERK MIDDLEWARE (global) ────────────────────────────────────────────

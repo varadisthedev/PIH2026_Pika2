@@ -10,6 +10,7 @@ import Container from '../components/layout/Container.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Button from '../components/ui/Button.jsx';
 import { EmptyState } from '../components/items/ItemStates.jsx';
+import getImageUrl from '../utils/imageUrl.js';
 
 const STATUS_META = {
     approved: { icon: CheckCircle2, color: 'success', label: 'Confirmed' },
@@ -33,7 +34,7 @@ function BookingCard({ booking }) {
             <div className="relative h-44 bg-brand-teal/10 dark:bg-brand-teal/5 flex items-center justify-center overflow-hidden">
                 {product.images?.[0] ? (
                     <img
-                        src={product.images[0]}
+                        src={getImageUrl(product.images[0])}
                         alt={product.title}
                         className="w-full h-full object-cover"
                     />

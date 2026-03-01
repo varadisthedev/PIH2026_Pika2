@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard, Package, Clock, CheckCircle2, RotateCcw, IndianRupee, Plus,
-    Calendar, ArrowRight, Loader2, Store, Trash2, Pencil, User, XCircle, Mail, X, Save, ImagePlus, Image,
+    Calendar, ArrowRight, Loader2, Store, Trash2, Pencil, User, XCircle, Mail, X, Save, ImagePlus, Image, CreditCard, Lock,
 } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
 import api, { withToken } from '../api/axios.js';
@@ -12,6 +12,7 @@ import Button from '../components/ui/Button.jsx';
 import { EmptyState } from '../components/items/ItemStates.jsx';
 import ListItemModal from '../components/ListItemModal.jsx';
 import { useRental } from '../context/RentalContext.jsx';
+import getImageUrl from '../utils/imageUrl.js';
 
 const STATUS_ICON = {
     pending:   <Clock size={14} />,
@@ -25,13 +26,15 @@ const STATUS_COLOR = {
 };
 
 /* ── Renter's incoming rental card ── */
-function RequestCard({ req, onCancel, confirmId, setConfirmId }) {
+function RequestCard({ req, onCancel, onPay, confirmId, setConfirmId, payingId }) {
     const product = req.product || {};
+    const needsPayment = req.status === 'pending' && req.paymentStatus !== 'paid';
+    const isPaying = payingId === req._id;
     return (
         <div className="glass-card rounded-2xl p-4 flex gap-4 items-start card-hover">
             <div className="w-16 h-16 rounded-xl bg-[#4f7CAC]/20 dark:bg-[#9EEFE5]/10 flex items-center justify-center shrink-0 overflow-hidden">
                 {product.images?.[0]
-                    ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                    ? <img src={getImageUrl(product.images[0])} alt={product.title} className="w-full h-full object-cover" />
                     : <Package size={24} className="text-[#3C474B] opacity-40" />}
             </div>
             <div className="flex-1 min-w-0">
@@ -48,9 +51,28 @@ function RequestCard({ req, onCancel, confirmId, setConfirmId }) {
                     <span className="flex items-center gap-1 font-bold text-[#162521] dark:text-[#C0E0D2]">
                         <IndianRupee size={11} /> {req.totalPrice?.toLocaleString('en-IN')}
                     </span>
+                    {req.paymentStatus === 'paid' && (
+                        <span className="flex items-center gap-1 text-brand-green font-black text-[10px] uppercase tracking-wider">
+                            <CheckCircle2 size={10} /> Paid
+                        </span>
+                    )}
                 </div>
+
+                {/* Pay Now — prominent CTA for unpaid pending bookings */}
+                {needsPayment && (
+                    <button
+                        onClick={() => onPay(req._id)}
+                        disabled={isPaying}
+                        className="mt-3 w-full py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-brand-green text-brand-dark hover:bg-brand-green/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 shadow-lg shadow-brand-green/20"
+                    >
+                        {isPaying
+                            ? <><Loader2 size={13} className="animate-spin" /> Opening Payment…</>
+                            : <><Lock size={13} /> Pay Now — ₹{req.totalPrice?.toLocaleString('en-IN')}</>}
+                    </button>
+                )}
+
                 {(req.status === 'pending' || req.status === 'approved') && (
-                    <div className="mt-3 flex justify-end gap-2">
+                    <div className="mt-2 flex justify-end gap-2">
                         {confirmId === `cancel-${req._id}` ? (
                             <>
                                 <span className="text-[10px] font-bold text-red-500 self-center">Cancel this request?</span>
@@ -97,7 +119,7 @@ function SellerRequestCard({ req, onStatusUpdate }) {
             <div className="flex items-start gap-3">
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#4f7CAC]/20 shrink-0">
                     {product.images?.[0]
-                        ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                        ? <img src={getImageUrl(product.images[0])} alt={product.title} className="w-full h-full object-cover" />
                         : <Package size={20} className="text-[#3C474B] opacity-40 m-auto mt-3" />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -149,6 +171,237 @@ function SellerRequestCard({ req, onStatusUpdate }) {
     );
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Borrowing History — replaces the old "My Rentals" simple grid
+   ───────────────────────────────────────────────────────────────────────── */
+const BORROW_FILTERS = [
+    { key: 'all',       label: 'All' },
+    { key: 'unpaid',    label: 'Unpaid' },
+    { key: 'active',    label: 'Active' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'cancelled', label: 'Cancelled' },
+];
+
+function BorrowingHistory({ rentals, onCancel, onPay, confirmId, setConfirmId, payingId, onBrowse }) {
+    const [filter, setFilter] = useState('all');
+
+    const filtered = rentals.filter(r => {
+        if (filter === 'all')       return true;
+        if (filter === 'unpaid')    return r.status === 'pending' && r.paymentStatus !== 'paid';
+        if (filter === 'active')    return r.status === 'approved';
+        if (filter === 'completed') return r.status === 'completed';
+        if (filter === 'cancelled') return r.status === 'cancelled' || r.status === 'rejected';
+        return true;
+    });
+
+    const counts = {
+        all:       rentals.length,
+        unpaid:    rentals.filter(r => r.status === 'pending' && r.paymentStatus !== 'paid').length,
+        active:    rentals.filter(r => r.status === 'approved').length,
+        completed: rentals.filter(r => r.status === 'completed').length,
+        cancelled: rentals.filter(r => r.status === 'cancelled' || r.status === 'rejected').length,
+    };
+
+    const STATUS_META = {
+        pending:   { label: 'Pending',   color: 'text-amber-500',       bg: 'bg-amber-500/10',   dot: 'bg-amber-400' },
+        approved:  { label: 'Active',    color: 'text-brand-green',     bg: 'bg-brand-green/10', dot: 'bg-brand-green' },
+        completed: { label: 'Completed', color: 'text-brand-teal',      bg: 'bg-brand-teal/10',  dot: 'bg-brand-teal' },
+        rejected:  { label: 'Rejected',  color: 'text-red-500',         bg: 'bg-red-500/10',     dot: 'bg-red-500' },
+        cancelled: { label: 'Cancelled', color: 'text-[#3C474B]/60',    bg: 'bg-[#3C474B]/5',    dot: 'bg-[#3C474B]/40' },
+    };
+
+    if (rentals.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-28 text-center space-y-6">
+                <div className="w-24 h-24 rounded-[2rem] bg-brand-teal/5 dark:bg-brand-aqua/10 flex items-center justify-center">
+                    <Clock size={40} className="text-brand-teal/30 dark:text-brand-aqua/40" />
+                </div>
+                <div>
+                    <h3 className="text-2xl font-black text-brand-dark dark:text-brand-frost tracking-tighter mb-2">No borrowing history yet</h3>
+                    <p className="text-sm font-bold text-[#3C474B] dark:text-[#9EEFE5] max-w-xs">
+                        You haven't rented anything yet. Browse local gear and make your first booking.
+                    </p>
+                </div>
+                <button
+                    onClick={onBrowse}
+                    className="px-8 py-3 rounded-2xl bg-brand-green text-brand-dark font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl shadow-brand-green/20 flex items-center gap-2"
+                >
+                    <ArrowRight size={15} /> Explore Gear
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Filter Bar */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {BORROW_FILTERS.map(f => (
+                    <button
+                        key={f.key}
+                        onClick={() => setFilter(f.key)}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${
+                            filter === f.key
+                                ? 'bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark shadow-md'
+                                : 'glass-card text-[#3C474B] dark:text-[#9EEFE5] hover:scale-[1.02]'
+                        }`}
+                    >
+                        {f.label}
+                        {counts[f.key] > 0 && (
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                                filter === f.key
+                                    ? 'bg-white/20 text-white dark:bg-brand-dark/30 dark:text-brand-dark'
+                                    : 'bg-[#4f7CAC]/20 text-[#3d6b50] dark:bg-[#9EEFE5]/15 dark:text-[#9EEFE5]'
+                            }`}>
+                                {counts[f.key]}
+                            </span>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Empty per filter */}
+            {filtered.length === 0 && (
+                <div className="flex flex-col items-center py-16 text-center space-y-3">
+                    <CheckCircle2 size={36} className="text-brand-teal/20" />
+                    <p className="text-sm font-black text-[#3C474B] dark:text-[#9EEFE5] uppercase tracking-tight">
+                        No {filter === 'unpaid' ? 'unpaid' : filter} bookings
+                    </p>
+                </div>
+            )}
+
+            {/* Cards */}
+            <div className="space-y-4">
+                {filtered.map((r, i) => {
+                    const product  = r.product || {};
+                    const meta     = STATUS_META[r.status] || STATUS_META.pending;
+                    const needsPay = r.status === 'pending' && r.paymentStatus !== 'paid';
+                    const isPaying = payingId === r._id;
+                    const days     = Math.max(1, Math.ceil(
+                        (new Date(r.endDate) - new Date(r.startDate)) / 86400000
+                    ));
+
+                    return (
+                        <div
+                            key={r._id}
+                            className="glass-card rounded-[1.75rem] overflow-hidden animate-fade-up"
+                            style={{ animationDelay: `${i * 40}ms` }}
+                        >
+                            <div className="flex gap-0">
+                                {/* Left accent stripe */}
+                                <div className={`w-1 shrink-0 ${meta.dot}`} />
+
+                                <div className="flex-1 p-5">
+                                    {/* Top row: image + info + status */}
+                                    <div className="flex gap-4 items-start mb-4">
+                                        <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#4f7CAC]/10 dark:bg-[#9EEFE5]/5 shrink-0 flex items-center justify-center">
+                                            {product.images?.[0]
+                                                ? <img src={getImageUrl(product.images[0])} alt={product.title} className="w-full h-full object-cover" />
+                                                : <Package size={30} className="text-[#3C474B]/30 dark:text-[#9EEFE5]/20" />}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2 mb-1">
+                                                <h3 className="font-black text-[#162521] dark:text-[#C0E0D2] text-sm leading-tight line-clamp-2">
+                                                    {product.title || 'Unknown Item'}
+                                                </h3>
+                                                {/* Status pill */}
+                                                <span className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${meta.bg} ${meta.color}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${meta.dot} ${r.status === 'approved' ? 'animate-pulse' : ''}`} />
+                                                    {meta.label}
+                                                </span>
+                                            </div>
+
+                                            {/* Category */}
+                                            <p className="text-[10px] font-black text-[#3C474B]/50 dark:text-[#9EEFE5]/40 uppercase tracking-widest mb-2">
+                                                {product.category || '—'}
+                                            </p>
+
+                                            {/* Payment badge */}
+                                            {r.paymentStatus === 'paid' && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-green/10 text-brand-green text-[10px] font-black uppercase tracking-widest">
+                                                    <CheckCircle2 size={10} /> Paid
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Details grid */}
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <div className="bg-[#4f7CAC]/5 dark:bg-[#9EEFE5]/5 rounded-xl p-3">
+                                            <div className="text-[9px] font-black uppercase tracking-widest text-[#3C474B]/50 dark:text-[#9EEFE5]/40 mb-1">From</div>
+                                            <div className="text-xs font-black text-[#162521] dark:text-[#C0E0D2]">
+                                                {new Date(r.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#4f7CAC]/5 dark:bg-[#9EEFE5]/5 rounded-xl p-3">
+                                            <div className="text-[9px] font-black uppercase tracking-widest text-[#3C474B]/50 dark:text-[#9EEFE5]/40 mb-1">To</div>
+                                            <div className="text-xs font-black text-[#162521] dark:text-[#C0E0D2]">
+                                                {new Date(r.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#4f7CAC]/5 dark:bg-[#9EEFE5]/5 rounded-xl p-3">
+                                            <div className="text-[9px] font-black uppercase tracking-widest text-[#3C474B]/50 dark:text-[#9EEFE5]/40 mb-1">Duration</div>
+                                            <div className="text-xs font-black text-[#162521] dark:text-[#C0E0D2]">{days}d</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Price row */}
+                                    <div className="flex items-center justify-between mb-4 px-1">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#3C474B]/50 dark:text-[#9EEFE5]/40">
+                                            Total Paid
+                                        </span>
+                                        <span className="text-lg font-black text-[#162521] dark:text-[#C0E0D2]">
+                                            ₹{r.totalPrice?.toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+
+                                    {/* Pay Now CTA — only for unpaid pending bookings */}
+                                    {needsPay && (
+                                        <button
+                                            onClick={() => onPay(r._id)}
+                                            disabled={isPaying}
+                                            className="w-full py-3 rounded-2xl mb-3 font-black text-xs uppercase tracking-widest bg-brand-green text-brand-dark hover:bg-brand-green/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl shadow-brand-green/25 disabled:opacity-60"
+                                        >
+                                            {isPaying
+                                                ? <><Loader2 size={14} className="animate-spin" /> Opening Payment…</>
+                                                : <><Lock size={14} /> Pay Now — ₹{r.totalPrice?.toLocaleString('en-IN')}</>}
+                                        </button>
+                                    )}
+
+                                    {/* Cancel / confirm row */}
+                                    {(r.status === 'pending' || r.status === 'approved') && (
+                                        <div className="flex items-center justify-end gap-2">
+                                            {confirmId === `cancel-${r._id}` ? (
+                                                <>
+                                                    <span className="text-[10px] font-bold text-red-500">Cancel this?</span>
+                                                    <button onClick={() => onCancel(r._id)}
+                                                        className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-500 text-white hover:bg-red-600 transition">
+                                                        Yes
+                                                    </button>
+                                                    <button onClick={() => setConfirmId(null)}
+                                                        className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[#4f7CAC]/30 text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#4f7CAC]/5 transition">
+                                                        No
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button onClick={() => setConfirmId(`cancel-${r._id}`)}
+                                                    className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-300/50 dark:border-red-400/20 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition">
+                                                    Cancel Request
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function Dashboard() {
     const { getToken, isSignedIn, isLoaded } = useAuth();
 
@@ -163,7 +416,8 @@ export default function Dashboard() {
     const [editForm, setEditForm] = useState({});
     const [imageUploading, setImageUploading] = useState(false);
     const [updateSaving, setUpdateSaving] = useState(false);
-    const [confirmId, setConfirmId] = useState(null); // inline confirm pattern
+    const [confirmId, setConfirmId] = useState(null);
+    const [payingId, setPayingId] = useState(null);
 
     const loadData = useCallback(async () => {
         if (!isSignedIn) return;
@@ -194,6 +448,17 @@ export default function Dashboard() {
         }
     }, [getToken, isSignedIn]);
 
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.editItem) {
+            handleEditOpen(location.state.editItem);
+            setActiveTab('listings');
+            // Clear location state so modal doesn't re-open on refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
     useEffect(() => { if (isLoaded) loadData(); }, [isLoaded, loadData]);
 
     const handleStatusUpdate = async (rentalId, status) => {
@@ -222,6 +487,62 @@ export default function Dashboard() {
         } catch (err) {
             console.error('❌ [Dashboard] Cancel failed:', err.message);
             showToast(err.response?.data?.error || 'Failed to cancel request', 'error');
+        }
+    };
+
+    const handlePayNow = async (rentalId) => {
+        setPayingId(rentalId);
+        try {
+            if (!window.Razorpay) {
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    s.onload = resolve;
+                    s.onerror = reject;
+                    document.body.appendChild(s);
+                });
+            }
+            const token = await getToken();
+            const rental = myRentals.find(r => r._id === rentalId);
+            const orderRes = await api.post('/payments/create-order', { rentalId }, withToken(token));
+            const { orderId, amount, keyId } = orderRes.data;
+            const options = {
+                key: keyId,
+                amount: amount * 100,
+                currency: 'INR',
+                name: 'RentiGO',
+                description: `Rental: ${rental?.product?.title || 'Item'}`,
+                order_id: orderId,
+                theme: { color: '#007EA7' },
+                handler: async function (response) {
+                    try {
+                        await api.post('/payments/verify', {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        }, withToken(token));
+                        setMyRentals(prev => prev.map(r =>
+                            r._id === rentalId ? { ...r, status: 'approved', paymentStatus: 'paid' } : r
+                        ));
+                        showToast('Payment verified! Booking approved. 🎉', 'success');
+                    } catch {
+                        showToast('Payment verification failed. Contact support.', 'error');
+                    } finally {
+                        setPayingId(null);
+                    }
+                },
+                modal: { ondismiss: () => setPayingId(null) },
+            };
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', () => {
+                showToast('Payment failed. Please try again.', 'error');
+                setPayingId(null);
+            });
+            rzp.open();
+        } catch (err) {
+            console.error('❌ [Dashboard] PayNow error:', err.message);
+            showToast(err.response?.data?.error || 'Failed to open payment. Try again.', 'error');
+            setPayingId(null);
         }
     };
 
@@ -308,7 +629,7 @@ export default function Dashboard() {
     const { userRole } = useRental(); // 'renter' or 'lender'
 
     const RENTER_TABS = [
-        { id: 'requests', label: 'My Rentals', icon: Clock, count: myRentals.length },
+        { id: 'requests', label: 'Borrowing History', icon: Clock, count: myRentals.length },
     ];
 
     const LENDER_TABS = [
@@ -363,12 +684,22 @@ export default function Dashboard() {
                             <div className="glass-card rounded-2xl p-5">
                                 <Clock size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
                                 <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myRentals.length}</div>
-                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">My Rentals</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Total Borrowed</div>
                             </div>
                             <div className="glass-card rounded-2xl p-5">
                                 <CheckCircle2 size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
                                 <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myRentals.filter(r => r.status === 'approved').length}</div>
-                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Approved</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Active</div>
+                            </div>
+                            <div className="glass-card rounded-2xl p-5">
+                                <RotateCcw size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
+                                <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myRentals.filter(r => r.status === 'completed').length}</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Completed</div>
+                            </div>
+                            <div className="glass-card rounded-2xl p-5">
+                                <IndianRupee size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
+                                <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myRentals.filter(r => r.status === 'pending' && r.paymentStatus !== 'paid').length}</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Unpaid</div>
                             </div>
                         </>
                     ) : (
@@ -408,19 +739,17 @@ export default function Dashboard() {
                     ))}
                 </div>
 
-                {/* ── My Rentals tab ── */}
+                {/* ── Borrowing History tab ── */}
                 {activeTab === 'requests' && (
-                    <div>
-                        {myRentals.length === 0 ? (
-                            <EmptyState icon={Clock} title="No rentals yet"
-                                description="You haven't rented anything yet. Start browsing!"
-                                action={<Button variant="primary" onClick={() => navigate('/browse')}>Browse Items <ArrowRight size={15} /></Button>} />
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {myRentals.map(req => <RequestCard key={req._id} req={req} onCancel={handleCancelRequest} confirmId={confirmId} setConfirmId={setConfirmId} />)}
-                            </div>
-                        )}
-                    </div>
+                    <BorrowingHistory
+                        rentals={myRentals}
+                        onCancel={handleCancelRequest}
+                        onPay={handlePayNow}
+                        confirmId={confirmId}
+                        setConfirmId={setConfirmId}
+                        payingId={payingId}
+                        onBrowse={() => navigate('/browse')}
+                    />
                 )}
 
                 {/* ── Seller Incoming Requests tab ── */}
@@ -459,7 +788,7 @@ export default function Dashboard() {
                                         <Link to={`/item/${item._id}`}>
                                             <div className="h-36 overflow-hidden bg-[#4f7CAC]/20 dark:bg-[#9EEFE5]/10 flex items-center justify-center">
                                                 {item.images?.[0]
-                                                    ? <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
+                                                    ? <img src={getImageUrl(item.images[0])} alt={item.title} className="w-full h-full object-cover" />
                                                     : <Package size={40} className="text-[#3C474B] dark:text-[#9EEFE5] opacity-40" />}
                                             </div>
                                             <div className="p-4">
@@ -569,7 +898,7 @@ export default function Dashboard() {
                                 <div className="grid grid-cols-3 gap-3">
                                     {(editForm.images || []).map((url, idx) => (
                                         <div key={idx} className="relative group aspect-square rounded-2xl overflow-hidden bg-brand-teal/5 border border-brand-teal/10">
-                                            <img src={url} alt="" className="w-full h-full object-cover" />
+                                            <img src={getImageUrl(url)} alt="" className="w-full h-full object-cover" />
                                             <button
                                                 onClick={() => setEditForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) }))}
                                                 className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"

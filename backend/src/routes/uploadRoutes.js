@@ -10,8 +10,8 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// __dirname = backend/src  →  ../uploads = backend/uploads
-const uploadDir = path.resolve(__dirname, '../uploads');
+// Fix: We need to go up TWO directories from src/routes to reach backend/uploads
+const uploadDir = path.resolve(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -48,8 +48,9 @@ router.post('/', requireAuth(), upload.array('images', 5), (req, res) => {
             return res.status(400).json({ error: 'No files uploaded.' });
         }
 
-        const baseUrl = `${req.protocol}://${req.get('host')}`;
-        const urls = req.files.map(f => `${baseUrl}/uploads/${f.filename}`);
+        // Return relative paths — frontend resolves the host
+        // e.g. /uploads/1234567-abc.jpg  (not http://localhost:5000/uploads/...)
+        const urls = req.files.map(f => `/uploads/${f.filename}`);
 
         console.log(`✅ [upload] ${urls.length} image(s) uploaded:`, urls);
         res.status(201).json({ urls });
