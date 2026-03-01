@@ -148,7 +148,7 @@ export default function ItemDetails() {
 
         try {
             const token = await getToken();
-            
+
             // 1. Create Rental record (Pending)
             const rentalRes = await api.post('/rentals', {
                 productId: itemId,
@@ -192,13 +192,13 @@ export default function ItemDetails() {
                             headers: { Authorization: `Bearer ${token}` }
                         });
 
-                        // 6. Navigate to dashboard — backend already recorded rental
+                        // 6. Navigate to My Bookings — backend already recorded rental
                         setConfirming(false);
                         setConfirmed(true);
                         setTimeout(() => {
                             setBookingModalOpen(false);
-                            navigate('/dashboard');
-                        }, 1200);
+                            navigate('/my-bookings');
+                        }, 1500);
 
                     } catch (verifyError) {
                         console.error('Payment verification failed:', verifyError);
@@ -235,7 +235,7 @@ export default function ItemDetails() {
             setRentalError('Seller email is not available.');
             return;
         }
-        
+
         setConnecting(true);
         try {
             const token = await getToken();
@@ -268,7 +268,7 @@ export default function ItemDetails() {
                 <div className="pt-28 pb-10 flex items-center justify-between">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-brand-teal hover:text-brand-dark dark:text-brand-aqua dark:hover:text-brand-frost transition-all group"
+                        className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-text-secondary hover:text-brand-dark dark:text-brand-aqua dark:hover:text-brand-frost transition-all group"
                     >
                         <div className="w-10 h-10 rounded-2xl bg-brand-teal/5 dark:bg-brand-aqua/10 flex items-center justify-center group-hover:bg-brand-teal/10">
                             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
@@ -340,7 +340,7 @@ export default function ItemDetails() {
                                 <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-brand-dark dark:text-brand-frost leading-none">
                                     {item.title}
                                 </h1>
-                                <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-brand-teal/70 dark:text-brand-aqua/60">
+                                <div className="flex flex-wrap items-center gap-6 text-sm font-bold text-text-secondary">
                                     <div className="flex items-center gap-2">
                                         <Star size={18} className="fill-brand-green text-brand-green" />
                                         <span className="text-brand-dark dark:text-brand-frost">{item.rating || '5.0'}</span>
@@ -363,27 +363,27 @@ export default function ItemDetails() {
                         {/* Description & Specs */}
                         <Card variant="glass" className="!p-8 space-y-8">
                             <div>
-                                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/40 mb-4">Description</h3>
-                                <p className="text-lg text-brand-dark/80 dark:text-brand-frost/80 leading-relaxed font-medium">
+                                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-text-muted mb-4">Description</h3>
+                                <p className="text-lg text-text-secondary leading-relaxed font-medium">
                                     {item.description || "A high-quality item perfect for your needs. Professional grade and well-maintained by the owner. Available for immediate pickup in the local community."}
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-8 border-t border-brand-teal/10">
                                 <div className="space-y-1">
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-brand-teal/40">Response Time</div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-text-muted">Response Time</div>
                                     <div className="flex items-center gap-2 text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">
                                         <Clock size={14} className="text-brand-green" /> &lt; 2 Hours
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-brand-teal/40">Condition</div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-text-muted">Condition</div>
                                     <div className="flex items-center gap-2 text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">
                                         <Badge variant="info" className="px-2 py-0.5 !text-[10px]">Like New</Badge>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-brand-teal/40">Pickup Type</div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-text-muted">Pickup Type</div>
                                     <div className="flex items-center gap-2 text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">
                                         <Package size={14} className="text-brand-teal" /> Self-Pickup
                                     </div>
@@ -393,7 +393,7 @@ export default function ItemDetails() {
 
                         {/* Location Preview */}
                         <div className="space-y-6">
-                            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/40 px-2">Location Information</h3>
+                            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-text-muted px-2">Location Information</h3>
                             <div className="w-full relative h-64 rounded-[2rem] overflow-hidden glass-card border-brand-teal/5">
                                 {(item.location?.lat && item.location?.lng) ? (
                                     <MapContainer
@@ -417,7 +417,7 @@ export default function ItemDetails() {
                                     </MapContainer>
                                 ) : (
                                     <div className="absolute inset-0 bg-brand-green/5 dark:bg-brand-teal/5 flex items-center justify-center">
-                                        <div className="text-center font-bold text-brand-teal/40 uppercase tracking-widest text-[10px]">
+                                        <div className="text-center font-bold text-text-muted uppercase tracking-widest text-[10px]">
                                             <MapPin size={32} className="mx-auto mb-2 opacity-50" />
                                             Map Location Unavailable
                                         </div>
@@ -440,13 +440,13 @@ export default function ItemDetails() {
                         <Card variant="glass" className="!p-8 shadow-2xl !rounded-[2.5rem] border-brand-green/20">
                             <div className="flex items-baseline gap-2 mb-8">
                                 <span className="text-4xl font-black text-brand-dark dark:text-brand-frost">₹{item.pricePerDay?.toLocaleString('en-IN')}</span>
-                                <span className="text-xs font-black uppercase tracking-[0.2em] text-brand-teal/60">/ day</span>
+                                <span className="text-xs font-black uppercase tracking-[0.2em] text-text-muted">/ day</span>
                             </div>
 
                             <div className="space-y-4 mb-8">
                                 <div className="grid grid-cols-2 gap-2 p-2 rounded-2xl bg-brand-teal/5 dark:bg-brand-teal/10">
                                     <div className="flex flex-col gap-1 px-4 py-2 border-r border-brand-teal/10">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-brand-teal/60">Start Date</label>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-text-muted">Start Date</label>
                                         <input
                                             type="date"
                                             min={today}
@@ -456,7 +456,7 @@ export default function ItemDetails() {
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1 px-4 py-2">
-                                        <label className="text-[9px] font-black uppercase tracking-widest text-brand-teal/60">End Date</label>
+                                        <label className="text-[9px] font-black uppercase tracking-widest text-text-muted">End Date</label>
                                         <input
                                             type="date"
                                             min={startDate}
@@ -468,7 +468,7 @@ export default function ItemDetails() {
                                 </div>
                             </div>
 
-                            <div className="space-y-4 mb-10 pb-6 border-b border-brand-teal/10 text-[11px] font-black text-brand-teal/60 tracking-tight">
+                            <div className="space-y-4 mb-10 pb-6 border-b border-brand-teal/10 text-[11px] font-black text-text-secondary tracking-tight">
                                 <div className="flex justify-between uppercase">
                                     <span>Rent (₹{item.pricePerDay} × {days} days)</span>
                                     <span className="text-brand-dark dark:text-brand-frost font-black">₹{(item.pricePerDay * days).toLocaleString('en-IN')}</span>
@@ -543,40 +543,119 @@ export default function ItemDetails() {
                 )}
             </Container>
 
-            {/* SHARED MODALS */}
+            {/* BOOKING + CONFIRMATION MODAL */}
             <Modal isOpen={bookingModalOpen} onClose={() => !confirming && setBookingModalOpen(false)} title="Rental Confirmation">
                 {confirmed ? (
-                    <div className="text-center py-10 space-y-6 animate-fade-in">
-                        <div className="w-20 h-20 rounded-full bg-brand-green/20 flex items-center justify-center mx-auto shadow-inner">
-                            <CheckCircle2 size={40} className="text-brand-green" />
+                    <div className="text-center py-12 space-y-6 animate-fade-in">
+                        <div className="w-20 h-20 rounded-full bg-brand-green/15 flex items-center justify-center mx-auto ring-4 ring-brand-green/20">
+                            <CheckCircle2 size={44} className="text-brand-green" />
                         </div>
                         <div>
-                            <h3 className="text-2xl font-black text-brand-dark dark:text-brand-frost tracking-tighter mb-2">Payment Successful!</h3>
-                            <p className="text-sm font-bold text-brand-teal/60 uppercase tracking-tight max-w-[280px] mx-auto">
-                                The rental is approved and the owner has been notified.
+                            <h3 className="text-2xl font-black text-brand-dark dark:text-white tracking-tighter mb-2">Payment Successful!</h3>
+                            <p className="text-sm font-bold text-brand-dark/60 dark:text-brand-frost/60 max-w-[280px] mx-auto">
+                                Your rental is confirmed. The owner has been notified.
                             </p>
                         </div>
+                        <div className="text-[11px] font-black text-brand-green uppercase tracking-widest">Redirecting to My Bookings…</div>
                     </div>
                 ) : (
-                    <div className="space-y-8 pb-4">
-                        <div className="flex gap-4 p-4 rounded-3xl glass-card bg-brand-teal/5">
-                            <div className="w-20 h-20 rounded-2xl overflow-hidden glass-card">
-                                <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                    <div className="space-y-3">
+
+                        {/* Item Summary Card */}
+                        <div className="flex gap-3 p-3 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/10 dark:border-brand-frost/10">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden glass-card shrink-0">
+                                {imgSrc ? (
+                                    <img src={imgSrc} alt={item.title} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-brand-teal/5">
+                                        <Package size={22} className="text-brand-teal/30" />
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex-1 flex flex-col justify-center">
-                                <h4 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter leading-tight mb-1">{item.title}</h4>
-                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand-teal/60 uppercase">
-                                    <MapPin size={10} /> {displayLocation}
+                            <div className="flex-1 flex flex-col justify-center min-w-0">
+                                <h4 className="text-xs font-black text-brand-dark dark:text-white uppercase tracking-tighter leading-tight mb-1 line-clamp-1">{item.title}</h4>
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-brand-dark/60 dark:text-brand-frost/50 uppercase tracking-wide">
+                                    <MapPin size={9} /> {displayLocation}
                                 </div>
                             </div>
                         </div>
-                        {rentalError && <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest">{rentalError}</div>}
-                        <div className="flex gap-4 pt-4">
-                            <Button variant="outline" size="lg" className="flex-1 !rounded-2xl" onClick={() => setBookingModalOpen(false)} disabled={confirming}>Back</Button>
-                            <Button variant="primary" size="lg" className="flex-1 !rounded-2xl" onClick={handleBooking} disabled={confirming}>
-                                {confirming ? <><Loader2 size={16} className="animate-spin mr-2" /> Processing...</> : 'Confirm & Pay'}
+
+                        {/* Dates Row */}
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="p-2.5 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/10 dark:border-brand-frost/10">
+                                <div className="text-[8px] font-black uppercase tracking-widest text-brand-dark/50 dark:text-brand-frost/40 mb-0.5">Start</div>
+                                <div className="text-xs font-black text-brand-dark dark:text-white">{new Date(startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                            </div>
+                            <div className="p-2.5 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/10 dark:border-brand-frost/10">
+                                <div className="text-[8px] font-black uppercase tracking-widest text-brand-dark/50 dark:text-brand-frost/40 mb-0.5">End</div>
+                                <div className="text-xs font-black text-brand-dark dark:text-white">{new Date(endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                            </div>
+                        </div>
+
+                        {/* Price Breakdown */}
+                        <div className="rounded-xl border border-brand-teal/10 dark:border-brand-frost/10 overflow-hidden">
+                            <div className="px-3 py-2 bg-brand-teal/5 dark:bg-brand-teal/10">
+                                <span className="text-[8px] font-black uppercase tracking-widest text-brand-dark/60 dark:text-brand-frost/50">Price Breakdown</span>
+                            </div>
+                            <div className="divide-y divide-brand-teal/5 dark:divide-brand-frost/5">
+                                <div className="flex justify-between items-center px-3 py-2">
+                                    <span className="text-[11px] font-bold text-brand-dark/70 dark:text-brand-frost/70">
+                                        ₹{item.pricePerDay?.toLocaleString('en-IN')} × {days} day{days !== 1 ? 's' : ''}
+                                    </span>
+                                    <span className="text-[11px] font-black text-brand-dark dark:text-white">₹{(item.pricePerDay * days).toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between items-center px-3 py-2">
+                                    <span className="text-[11px] font-bold text-brand-dark/70 dark:text-brand-frost/70 flex items-center gap-1">
+                                        Security Deposit <Info size={10} className="text-brand-teal/50" />
+                                    </span>
+                                    <span className="text-[11px] font-black text-brand-dark dark:text-white">₹{securityDeposit.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between items-center px-3 py-2">
+                                    <span className="text-[11px] font-bold text-brand-dark/70 dark:text-brand-frost/70">Service Fee</span>
+                                    <span className="text-[11px] font-black text-brand-dark dark:text-white">₹{serviceFee.toLocaleString('en-IN')}</span>
+                                </div>
+                                <div className="flex justify-between items-center px-3 py-2.5 bg-brand-teal/5 dark:bg-brand-teal/10">
+                                    <span className="text-sm font-black text-brand-dark dark:text-white uppercase tracking-tight">Total</span>
+                                    <span className="text-base font-black text-brand-green">₹{totalCost.toLocaleString('en-IN')}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Trust Badge */}
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand-green/5 dark:bg-brand-green/10 border border-brand-green/10">
+                            <ShieldCheck size={14} className="text-brand-green shrink-0" />
+                            <span className="text-[9px] font-bold text-brand-dark/70 dark:text-brand-frost/60 uppercase tracking-wide">
+                                Secured by Razorpay · Refundable deposit on safe return
+                            </span>
+                        </div>
+
+                        {/* Error */}
+                        {rentalError && (
+                            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-widest">
+                                {rentalError}
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-1">
+                            <Button
+                                variant="outline" size="sm" className="flex-1 !rounded-xl"
+                                onClick={() => setBookingModalOpen(false)}
+                                disabled={confirming}
+                            >
+                                Back
+                            </Button>
+                            <Button
+                                variant="primary" size="sm" className="flex-1 !rounded-xl shadow-lg shadow-brand-green/20"
+                                onClick={handleBooking}
+                                disabled={confirming}
+                            >
+                                {confirming
+                                    ? <><Loader2 size={14} className="animate-spin mr-1.5" />Processing…</>
+                                    : <><Lock size={14} className="mr-1" />Confirm &amp; Pay</>}
                             </Button>
                         </div>
+
                     </div>
                 )}
             </Modal>
@@ -585,7 +664,7 @@ export default function ItemDetails() {
             <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden p-4 bg-white/80 dark:bg-brand-dark/80 backdrop-blur-xl border-t border-brand-teal/10">
                 <div className="flex items-center justify-between gap-6 max-w-lg mx-auto">
                     <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-brand-teal/40 uppercase tracking-widest">Total Price</span>
+                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total Price</span>
                         <span className="text-xl font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">₹{totalCost.toLocaleString('en-IN')}</span>
                     </div>
                     <Button

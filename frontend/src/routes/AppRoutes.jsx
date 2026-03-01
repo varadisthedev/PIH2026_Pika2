@@ -14,6 +14,7 @@ import Earnings from '../pages/Earnings.jsx';
 import MapView from '../pages/MapView.jsx';
 import NotFound from '../pages/NotFound.jsx';
 import Dashboard from '../pages/Dashboard.jsx';
+import MyBookings from '../pages/MyBookings.jsx';
 
 /** Pages that should NOT have the shared Navbar/Footer (full-screen layouts) */
 const BARE_ROUTES = ['/login', '/sign-up', '/map'];
@@ -49,8 +50,8 @@ export default function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
 
-        {/* Role-Specific Journeys — /list-item removed, redirects to browse */}
-        <Route path="/my-bookings" element={<Navigate to="/dashboard" replace />} />
+        {/* Role-Specific Journeys */}
+        <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/my-listings" element={<Navigate to="/dashboard" replace />} />
         <Route path="/list-item" element={<Navigate to="/browse" replace />} />
         <Route path="/earnings" element={<Earnings />} />

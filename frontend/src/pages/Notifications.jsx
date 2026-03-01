@@ -108,7 +108,7 @@ export default function Notifications() {
                         <div className="space-y-4">
                             <button
                                 onClick={() => navigate(-1)}
-                                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal hover:text-brand-dark dark:text-brand-aqua dark:hover:text-brand-frost transition-all group"
+                                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary hover:text-brand-dark dark:hover:text-brand-frost transition-all group"
                             >
                                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                                 Go Back
@@ -176,9 +176,9 @@ export default function Notifications() {
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <Badge variant={notif.type} className="!text-[9px] px-2 py-0.5 uppercase font-black tracking-widest">{notif.type}</Badge>
-                                                    <span className="text-[10px] font-black text-brand-teal/30 uppercase tracking-widest">{formatTime(notif.createdAt)}</span>
+                                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">{formatTime(notif.createdAt)}</span>
                                                 </div>
-                                                <p className={`text-sm tracking-tight leading-relaxed ${!notif.isRead ? 'font-black text-brand-dark dark:text-brand-frost' : 'font-semibold text-brand-dark/70 dark:text-brand-frost/60'}`}>
+                                                <p className={`text-sm tracking-tight leading-relaxed ${!notif.isRead ? 'font-black text-brand-dark dark:text-brand-frost' : 'font-semibold text-text-secondary'}`}>
                                                     {notif.message}
                                                 </p>
 
@@ -193,7 +193,7 @@ export default function Notifications() {
                                             <div className="flex flex-col gap-2 items-center">
                                                 <button
                                                     onClick={(e) => handleDelete(notif._id, e)}
-                                                    className="p-2 rounded-xl text-brand-teal/20 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                                    className="p-2 rounded-xl text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                                                     title="Delete"
                                                 >
                                                     <Trash2 size={15} />
@@ -217,7 +217,7 @@ export default function Notifications() {
                             </div>
                             <div>
                                 <h4 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter">Missed a message?</h4>
-                                <p className="text-[10px] font-bold text-brand-teal/60 uppercase tracking-widest">Check your neighborhood chat inbox</p>
+                                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Check your neighborhood chat inbox</p>
                             </div>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => navigate('/messages')} className="!rounded-2xl">

@@ -37,7 +37,7 @@ export function EmptyState({ icon: Icon, title, description, action }) {
             )}
             <h3 className="text-2xl font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter mb-3">{title}</h3>
             {description && (
-                <p className="text-brand-teal/60 dark:text-brand-aqua/40 text-[11px] font-black uppercase tracking-widest max-w-sm leading-relaxed mb-8">{description}</p>
+                <p className="text-text-secondary text-[11px] font-black uppercase tracking-widest max-w-sm leading-relaxed mb-8">{description}</p>
             )}
             {action && <div className="animate-fade-up">{action}</div>}
         </div>
@@ -52,7 +52,7 @@ export function ErrorState({ message, onRetry }) {
                 <span className="text-2xl">⚠️</span>
             </div>
             <h3 className="text-xl font-black text-brand-dark dark:text-brand-frost uppercase tracking-tighter mb-2">Something went wrong</h3>
-            <p className="text-xs font-bold text-brand-teal/60 dark:text-brand-aqua/40 mb-8 max-w-xs uppercase tracking-tight">{message || 'Failed to load data. Please check your connection and try again.'}</p>
+            <p className="text-xs font-bold text-text-secondary mb-8 max-w-xs uppercase tracking-tight">{message || 'Failed to load data. Please check your connection and try again.'}</p>
             {onRetry && (
                 <button
                     onClick={onRetry}

@@ -196,21 +196,21 @@ export default function ListItemModal({ onClose, onSuccess }) {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-20 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="w-full max-w-lg glass-card rounded-3xl shadow-2xl overflow-hidden animate-fade-up max-h-[92vh] flex flex-col">
+      <div className="w-full max-w-lg glass-card rounded-3xl shadow-2xl overflow-hidden animate-fade-up max-h-[78vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#4f7CAC]/20 dark:border-[#9EEFE5]/10 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-brand-green/20 flex items-center justify-center">
-              <Package size={20} className="text-brand-teal dark:text-brand-green" />
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#4f7CAC]/20 dark:border-[#9EEFE5]/10 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-brand-green/20 flex items-center justify-center">
+              <Package size={17} className="text-brand-teal dark:text-brand-green" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-brand-dark dark:text-brand-frost">List an Item</h2>
-              <p className="text-xs text-brand-teal dark:text-brand-aqua/70 font-semibold">Earn by renting to neighbours</p>
+              <h2 className="text-sm font-black text-brand-dark dark:text-brand-frost">List an Item</h2>
+              <p className="text-[10px] text-brand-teal dark:text-brand-aqua/70 font-semibold">Earn by renting to neighbours</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-[#3C474B] hover:bg-[#3C474B]/10 transition-colors">
-            <X size={20} />
+          <button onClick={onClose} className="p-1.5 rounded-xl text-[#3C474B] hover:bg-[#3C474B]/10 transition-colors">
+            <X size={18} />
           </button>
         </div>
 
@@ -248,7 +248,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3 overflow-y-auto">
 
             {/* Title */}
             <div className="flex flex-col gap-1.5">
@@ -305,7 +305,7 @@ export default function ListItemModal({ onClose, onSuccess }) {
               <div className="flex gap-3 px-4 py-3 rounded-xl border border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 bg-white/60 dark:bg-[#162521]/60 focus-within:ring-2 focus-within:ring-[#9EEFE5]/40 transition-all">
                 <FileText size={15} className="text-[#3C474B] shrink-0 mt-0.5" />
                 <textarea name="description" value={form.description} onChange={handleChange}
-                  placeholder="Condition, what's included, usage notes..." rows={3}
+                  placeholder="Condition, what's included, usage notes..." rows={2}
                   className="flex-1 bg-transparent text-sm font-medium text-brand-dark dark:text-brand-frost placeholder:text-[#3C474B]/50 outline-none resize-none" required maxLength={500} />
               </div>
             </div>
@@ -375,8 +375,8 @@ export default function ListItemModal({ onClose, onSuccess }) {
                 </div>
               ) : (
                 <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center justify-center gap-2 py-6 rounded-xl border-2 border-dashed border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 transition-colors">
-                  <Upload size={24} className="opacity-50" />
+                  className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl border-2 border-dashed border-[#4f7CAC]/40 dark:border-[#9EEFE5]/20 text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 transition-colors">
+                  <Upload size={20} className="opacity-50" />
                   <span className="text-xs font-bold">Click to browse photos from your device</span>
                   <span className="text-[10px] opacity-60">JPEG, PNG, WebP, GIF — max 5MB each</span>
                 </button>

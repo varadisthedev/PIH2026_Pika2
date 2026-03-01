@@ -57,7 +57,7 @@ export default function Messages() {
         try {
             const token = await getToken();
             const res = await api.post('/chats/connect', { email: connectEmail }, withToken(token));
-            
+
             // if new chat is returned, add and set active
             const newChat = res.data.chat;
             setChats(prev => {
@@ -78,7 +78,7 @@ export default function Messages() {
     const handleSend = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !activeChat) return;
-        
+
         const tempText = newMessage;
         setNewMessage('');
 
@@ -86,10 +86,10 @@ export default function Messages() {
         const msgObj = {
             _id: Date.now().toString(),
             text: tempText,
-            sender: user?.id || userId, 
+            sender: user?.id || userId,
             createdAt: new Date().toISOString()
         };
-        
+
         // Temporarily append
         setActiveChat(prev => ({ ...prev, messages: [...prev.messages, msgObj] }));
         setChats(prev => prev.map(c => c._id === activeChat._id ? { ...c, messages: [...c.messages, msgObj], lastMessageAt: new Date().toISOString() } : c));
@@ -126,7 +126,7 @@ export default function Messages() {
         // Instead of perfect ID matching, let's just do a proxy via participants finding me
         const myParticipant = activeChat?.participants?.find(p => p.email?.toLowerCase() === user?.primaryEmailAddress?.emailAddress?.toLowerCase());
         const myDbId = myParticipant?._id;
-        
+
         return senderId === myDbId || senderId === user?.id || senderId === userId;
     };
 
@@ -180,7 +180,7 @@ export default function Messages() {
                                 chats.map(chat => {
                                     const otherUser = getOtherParticipant(chat);
                                     const lastMsg = chat.messages[chat.messages.length - 1];
-                                    
+
                                     return (
                                         <button
                                             key={chat._id}
@@ -194,15 +194,15 @@ export default function Messages() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <h4 className="text-xs font-black uppercase tracking-tight truncate">{otherUser?.name || otherUser?.email || 'Unknown User'}</h4>
-                                                    <span className={`text-[8px] font-black uppercase ${activeChat?._id === chat._id ? 'opacity-60' : 'text-brand-teal/40'}`}>
+                                                    <h4 className="text-xs font-black uppercase tracking-tight truncate text-brand-dark dark:text-white group-[.active]:text-white">{otherUser?.name || otherUser?.email || 'Unknown User'}</h4>
+                                                    <span className={`text-[8px] font-black uppercase ${activeChat?._id === chat._id ? 'opacity-70 text-white' : 'text-brand-teal/60 dark:text-brand-frost/50'}`}>
                                                         {lastMsg ? formatTime(lastMsg.createdAt) : ''}
                                                     </span>
                                                 </div>
-                                                <p className={`text-[10px] font-bold line-clamp-1 truncate ${activeChat?._id === chat._id ? 'opacity-80' : 'text-brand-teal/60 dark:text-brand-aqua/50'}`}>
+                                                <p className={`text-[10px] font-bold line-clamp-1 truncate ${activeChat?._id === chat._id ? 'opacity-80 text-white' : 'text-brand-dark/60 dark:text-brand-frost/60'}`}>
                                                     {lastMsg ? lastMsg.text : 'No messages yet'}
                                                 </p>
-                                                <p className={`text-[9px] font-bold mt-0.5 truncate ${activeChat?._id === chat._id ? 'opacity-50' : 'text-brand-teal/30 dark:text-brand-aqua/30'}`}>
+                                                <p className={`text-[9px] font-bold mt-0.5 truncate ${activeChat?._id === chat._id ? 'opacity-60 text-white' : 'text-brand-teal/50 dark:text-brand-frost/40'}`}>
                                                     {otherUser?.email}
                                                 </p>
                                             </div>
@@ -259,17 +259,17 @@ export default function Messages() {
                                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${getOtherParticipant(currentChat)?.name || 'User'}`} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tight leading-none">
+                                        <h3 className="text-sm font-black text-brand-dark dark:text-white uppercase tracking-tight leading-none">
                                             {getOtherParticipant(currentChat)?.name || 'User'}
                                         </h3>
-                                        <div className="text-[10px] font-bold text-brand-teal/80 mt-1 lowercase tracking-wide flex items-center gap-2">
+                                        <div className="text-[10px] font-bold text-brand-dark/70 dark:text-brand-frost/70 mt-1 lowercase tracking-wide flex items-center gap-2">
                                             <span>{user?.primaryEmailAddress?.emailAddress}</span>
                                             <span className="opacity-50 text-brand-green">↔</span>
                                             <span>{getOtherParticipant(currentChat)?.email}</span>
                                         </div>
                                         <div className="flex items-center gap-1 mt-1">
                                             <div className="w-1.5 h-1.5 rounded-full bg-brand-green" />
-                                            <span className="text-[9px] font-bold text-brand-teal/60 uppercase">Real-time (Auto Sync)</span>
+                                            <span className="text-[9px] font-bold text-brand-teal/70 dark:text-brand-frost/50 uppercase">Real-time (Auto Sync)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -287,8 +287,8 @@ export default function Messages() {
                                         <div key={msg._id} className={`flex ${sentByMe ? 'justify-end' : 'justify-start'} animate-fade-up`}>
                                             <div className={`max-w-[80%] sm:max-w-[60%] space-y-1 ${sentByMe ? 'items-end' : 'items-start'}`}>
                                                 <div className={`p-5 px-6 rounded-[2rem] text-xs font-bold leading-relaxed shadow-sm ${sentByMe
-                                                        ? 'bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark rounded-tr-none'
-                                                        : 'glass-card text-brand-dark dark:text-brand-frost rounded-tl-none'
+                                                    ? 'bg-brand-dark text-brand-frost dark:bg-brand-green dark:text-brand-dark rounded-tr-none'
+                                                    : 'glass-card text-brand-dark dark:text-brand-frost rounded-tl-none'
                                                     }`}>
                                                     {msg.text}
                                                 </div>

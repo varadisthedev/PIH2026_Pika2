@@ -39,22 +39,22 @@ export default function Modal({
         <div
             ref={overlayRef}
             onClick={handleOverlayClick}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-20 animate-fade-in"
             style={{ backgroundColor: 'rgba(22, 37, 33, 0.65)', backdropFilter: 'blur(6px)' }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
         >
             <div
-                className={`w-full ${maxWidth} animate-scale-in glass-card rounded-2xl shadow-2xl p-6`}
+                className={`w-full ${maxWidth} animate-scale-in glass-card rounded-2xl shadow-2xl flex flex-col max-h-[80vh]`}
                 style={{ boxShadow: '0 24px 80px rgba(0,0,0,0.3), 0 8px 24px rgba(22,37,33,0.15)' }}
             >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-5">
+                {/* Header — always visible, never scrolls away */}
+                <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-brand-teal/10 dark:border-brand-frost/10 shrink-0">
                     {title && (
                         <h2
                             id="modal-title"
-                            className="text-xl font-bold text-[#162521] dark:text-[#C0E0D2]"
+                            className="text-base font-black text-brand-dark dark:text-white tracking-tight"
                         >
                             {title}
                         </h2>
@@ -62,16 +62,18 @@ export default function Modal({
                     {showClose && (
                         <button
                             onClick={onClose}
-                            className="ml-auto p-2 rounded-xl text-[#3C474B] hover:bg-[#3C474B]/10 dark:text-[#9EEFE5] dark:hover:bg-[#9EEFE5]/10 transition-colors"
+                            className="ml-auto p-1.5 rounded-xl text-brand-teal hover:bg-brand-teal/10 dark:text-brand-frost/60 dark:hover:bg-brand-frost/10 transition-colors"
                             aria-label="Close modal"
                         >
-                            <X size={20} />
+                            <X size={18} />
                         </button>
                     )}
                 </div>
 
-                {/* Content */}
-                <div>{children}</div>
+                {/* Content — scrollable when content overflows */}
+                <div className="overflow-y-auto px-5 py-4 flex-1">
+                    {children}
+                </div>
             </div>
         </div>
     );

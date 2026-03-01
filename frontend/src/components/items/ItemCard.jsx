@@ -105,7 +105,7 @@ export default function ItemCard({ item }) {
                         </h3>
 
                         {/* Location & Distance */}
-                        <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-brand-teal/60">
+                        <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-text-secondary">
                             <MapPin size={12} className="text-brand-green" />
                             <span className="line-clamp-1">{displayAddress}</span>
                             {displayDistance && (
@@ -117,7 +117,7 @@ export default function ItemCard({ item }) {
                     {/* Footer Info */}
                     <div className="mt-5 pt-4 border-t border-brand-teal/5 flex items-end justify-between">
                         <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-teal/40 mb-1">Per Day</span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">Per Day</span>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-black text-brand-dark dark:text-brand-frost leading-none">
                                     ₹{pricePerDay?.toLocaleString('en-IN')}

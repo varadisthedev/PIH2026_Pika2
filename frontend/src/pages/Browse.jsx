@@ -112,7 +112,7 @@ export default function Browse() {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-16 pt-10 animate-fade-up">
                     <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-brand-teal/40">
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-text-muted">
                             <MapPin size={14} className="text-brand-green" /> Local Neighborhood Explorer
                         </div>
                         <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-brand-dark dark:text-brand-frost leading-none">
@@ -140,11 +140,12 @@ export default function Browse() {
                         </div>
 
                         <div className="hidden lg:flex items-center gap-3 glass-card p-1 rounded-2xl border border-brand-teal/10">
-                            <SlidersHorizontal size={16} className="ml-4 text-brand-teal/40" />
+                            <SlidersHorizontal size={16} className="ml-4 text-brand-teal dark:text-brand-frost/60" />
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="bg-transparent text-[10px] font-black uppercase tracking-widest text-brand-dark dark:text-brand-frost outline-none cursor-pointer px-4 py-3 min-w-[160px]"
+                                className="text-[10px] font-black uppercase tracking-widest text-brand-dark dark:text-brand-frost outline-none cursor-pointer px-4 py-3 min-w-[160px] rounded-xl"
+                                style={{ backgroundColor: 'var(--select-bg)', color: 'var(--select-text)' }}
                             >
                                 <option value="nearest">Distance: Nearest</option>
                                 <option value="price_low">Price: Low to High</option>
@@ -159,22 +160,23 @@ export default function Browse() {
                     <aside className="hidden lg:flex flex-col gap-10 sticky top-32">
                         {/* Search Input */}
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/60 dark:text-brand-aqua/80">Search Neighbourhood</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary group-focus-within:text-brand-green transition-colors">Search Neighbourhood</label>
                             <div className="relative group">
-                                <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-teal group-focus-within:text-brand-dark dark:group-focus-within:text-brand-frost transition-colors" />
+                                <Search size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-brand-teal/60 group-focus-within:text-brand-dark dark:group-focus-within:text-brand-frost transition-colors" />
                                 <input
                                     type="text"
                                     placeholder="Search gear..."
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
-                                    className="w-full pl-16 pr-6 py-5 rounded-3xl glass-card bg-white/60 dark:bg-brand-dark/20 border-none outline-none text-xs font-black text-brand-dark dark:text-brand-frost placeholder:text-brand-teal/20 transition-all focus:ring-4 focus:ring-brand-green/10 shadow-inner"
+                                    className="w-full pl-16 pr-6 py-5 rounded-3xl glass-card border-none outline-none text-xs font-black text-brand-dark dark:text-brand-frost placeholder:text-brand-teal/40 dark:placeholder:text-brand-frost/30 transition-all focus:ring-4 focus:ring-brand-green/10 shadow-inner"
+                                    style={{ backgroundColor: 'var(--input-bg)' }}
                                 />
                             </div>
                         </div>
 
                         {/* Category List */}
                         <div className="space-y-6">
-                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/60 dark:text-brand-aqua/80">Category Catalog</label>
+                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">Category Catalog</label>
                             <div className="flex flex-col gap-2">
                                 {['All', ...CATEGORIES].map(cat => (
                                     <button
@@ -194,7 +196,7 @@ export default function Browse() {
                         {/* Radius Slider */}
                         <div className="space-y-4 glass-card !p-6 !rounded-3xl">
                             <div className="flex justify-between items-center">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/60 dark:text-brand-aqua/80">Search Radius</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-dark dark:text-brand-frost">Search Radius</label>
                                 <span className="text-xs font-black text-brand-dark dark:text-brand-frost">
                                     {radiusKm >= 6000 ? 'All India' : `${radiusKm.toLocaleString()} km`}
                                 </span>
@@ -205,7 +207,7 @@ export default function Browse() {
                                 onChange={e => setRadiusKm(Number(e.target.value))}
                                 className="w-full h-1.5 bg-brand-teal/10 rounded-lg appearance-none cursor-pointer accent-brand-green"
                             />
-                            <div className="flex justify-between text-[8px] font-black text-brand-teal/30 uppercase tracking-widest">
+                            <div className="flex justify-between text-[8px] font-black text-brand-teal/60 dark:text-brand-frost/50 uppercase tracking-widest">
                                 <span>1 km</span>
                                 <span>All India (6000 km)</span>
                             </div>
@@ -292,7 +294,7 @@ export default function Browse() {
                         <div className="space-y-12">
                             {/* Category */}
                             <div className="space-y-6">
-                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-teal/40">Neighborhood Catalog</label>
+                                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-text-secondary">Neighborhood Catalog</label>
                                 <div className="flex flex-wrap gap-2">
                                     {['All', ...CATEGORIES].map(cat => (
                                         <button
@@ -312,7 +314,7 @@ export default function Browse() {
                             {/* Radius */}
                             <div className="space-y-4 p-6 rounded-3xl bg-brand-teal/[0.03] border border-brand-teal/5">
                                 <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/40">Search Radius</label>
+                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary">Search Radius</label>
                                     <span className="text-sm font-black text-brand-dark dark:text-brand-frost">
                                         {radiusKm >= 6000 ? 'All India' : `${radiusKm.toLocaleString()} km`}
                                     </span>
@@ -336,7 +338,7 @@ export default function Browse() {
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-teal/40">Budget (₹ / Day)</label>
                                 <div className="flex gap-4">
                                     <div className="flex-1 space-y-2">
-                                        <label className="text-[8px] font-black uppercase tracking-widest text-brand-teal/40 px-4">Maximum</label>
+                                        <label className="text-[8px] font-black uppercase tracking-widest text-text-muted px-4">Maximum</label>
                                         <input
                                             type="number"
                                             placeholder="Set max"

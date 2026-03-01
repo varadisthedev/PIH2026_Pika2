@@ -93,7 +93,7 @@ export default function Home() {
                             <span className="text-brand-teal dark:text-brand-green italic opacity-90">Right Next Door.</span>
                         </h1>
 
-                        <p className="text-lg sm:text-xl text-brand-teal/70 dark:text-brand-aqua/60 max-w-2xl mx-auto leading-relaxed mb-12 font-bold animate-fade-up delay-150">
+                        <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed mb-12 font-bold animate-fade-up delay-150">
                             Stop buying things you only use once. RentiGO connects you with neighbours to share gear, save money, and reduce waste.
                         </p>
 
@@ -161,7 +161,7 @@ export default function Home() {
                 <Container>
                     <div className="flex items-end justify-between mb-12">
                         <div>
-                            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/60 mb-3">Community Hub</h2>
+                            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-text-muted mb-3">Community Hub</h2>
                             <h3 className="text-4xl font-black text-brand-dark dark:text-brand-frost tracking-tighter">Nearby Favourites</h3>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => navigate('/browse')} className="!rounded-xl group">
@@ -185,7 +185,7 @@ export default function Home() {
             <section className="py-24">
                 <Container>
                     <div className="max-w-xl mx-auto text-center mb-16">
-                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/60 mb-4">Simple Process</h2>
+                        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-text-muted mb-4">Simple Process</h2>
                         <h3 className="text-4xl font-black text-brand-dark dark:text-brand-frost tracking-tighter">Your local sharing economy.</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -198,7 +198,7 @@ export default function Home() {
                                     <Icon size={28} className="text-brand-green" />
                                 </div>
                                 <h4 className="text-xl font-black text-brand-dark dark:text-brand-frost mb-4 tracking-tight">{title}</h4>
-                                <p className="text-sm text-brand-teal/70 dark:text-brand-aqua/60 leading-relaxed font-bold">
+                                <p className="text-sm text-text-secondary leading-relaxed font-bold">
                                     {desc}
                                 </p>
                             </div>
@@ -214,7 +214,7 @@ export default function Home() {
                         <div className="absolute inset-0 bg-gradient-to-br from-brand-green/10 to-brand-teal/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="relative z-10 max-w-2xl mx-auto">
                             <h2 className="text-4xl font-black text-brand-dark dark:text-brand-frost tracking-tighter mb-6">Have gear sitting idle?</h2>
-                            <p className="text-lg text-brand-teal/70 dark:text-brand-aqua/60 leading-relaxed mb-10 font-bold">
+                            <p className="text-lg text-text-secondary leading-relaxed mb-10 font-bold">
                                 Turn your tools, cameras, and gear into passive income. Your items are protected and our community is verified.
                             </p>
                             <Button

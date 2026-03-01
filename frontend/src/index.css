@@ -18,15 +18,55 @@
   --brand-green: #4f7CAC;
   --brand-aqua: #9EEFE5;
   --brand-frost: #C0E0D2;
+
+  /* Text Contrast System */
+  --text-primary: #162521;
+  --text-secondary: #3C474B;
+  --text-muted: rgba(60, 71, 75, 0.6);
+
+  /* Navbar / Button Tokens (Light) */
+  --nav-bg: rgba(255, 255, 255, 0.72);
+  --border-color: rgba(79, 124, 172, 0.18);
+  --btn-primary-bg: #162521;
+  --btn-primary-text: #C0E0D2;
+  --input-bg: rgba(255, 255, 255, 0.6);
+  --input-text: #162521;
+  --select-bg: #ffffff;
+  --select-text: #162521;
 }
 
 html.dark {
-  /* New Dark Mode Palette */
+  /* Dynamic Dark Mode Palette: Ink Black, Deep Indigo, Cerulean */
   --brand-dark: #00171F;
-  --brand-teal: #003459;
-  --brand-green: #007EA7;
+  /* Ink Black */
+  --brand-teal: #2e294e;
+  /* Deep Indigo */
+  --brand-green: #2798BD;
+  /* New Cerulean */
   --brand-aqua: #ffffff;
   --brand-frost: #ffffff;
+
+  /* Enhanced Text System for Visual Accessibility */
+  --text-primary: #ffffff;
+  --text-secondary: #C0E0D2;
+  --text-muted: rgba(192, 224, 210, 0.6);
+  /* Pearl Aqua tint for readability */
+
+  /* Navbar / Button Tokens (Dark) */
+  --nav-bg: rgba(0, 23, 31, 0.82);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --btn-primary-bg: #2798BD;
+  --btn-primary-text: #ffffff;
+  --input-bg: rgba(0, 23, 31, 0.4);
+  --input-text: #ffffff;
+  --select-bg: #00171F;
+  --select-text: #ffffff;
+}
+
+/* Fix select dropdown option text in dark mode */
+html.dark select option {
+  background-color: #001e28;
+  color: #ffffff;
 }
 
 @theme {
@@ -38,6 +78,11 @@ html.dark {
   --color-brand-green: var(--brand-green);
   --color-brand-aqua: var(--brand-aqua);
   --color-brand-frost: var(--brand-frost);
+
+  /* Functional Text Colors */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
 
   /* Spacing Scale (Standard 4px) */
   --spacing-1: 0.25rem;
@@ -268,9 +313,9 @@ html.dark .card-hover:hover {
 
 html.dark .hero-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(158, 239, 229, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(79, 124, 172, 0.1) 0%, transparent 65%),
-    linear-gradient(160deg, #162521 0%, #061210 55%, #051208 100%);
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(39, 152, 189, 0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(46, 41, 78, 0.2) 0%, transparent 65%),
+    linear-gradient(160deg, #00171F 0%, #000a0d 55%, #000000 100%);
 }
 
 /* =============================================

@@ -38,25 +38,31 @@ export function Navbar() {
   };
 
   return (
-    <nav className="fixed w-full z-10 transition-colors duration-300 border-b" style={{ backgroundColor: 'var(--nav-bg)', borderColor: 'var(--border-color)' }}>
+    <nav
+      className="fixed w-full z-10 transition-colors duration-300 border-b backdrop-blur-xl"
+      style={{ backgroundColor: 'var(--nav-bg)', borderColor: 'var(--border-color)' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-brand-dark dark:bg-brand-green flex items-center justify-center">
-              <MapPin size={16} className="text-brand-frost dark:text-brand-dark" />
+            <div className="w-8 h-8 rounded-xl bg-brand-dark dark:bg-brand-green flex items-center justify-center shrink-0">
+              <MapPin size={16} className="text-brand-frost dark:text-white" />
             </div>
-            <span className="text-xl font-black tracking-tighter" style={{ color: 'var(--text-primary)' }}>
-              Renti<span className="text-brand-teal dark:text-brand-green">GO</span>
+            <span className="text-xl font-black tracking-tighter text-brand-dark dark:text-white">
+              Renti<span className="text-brand-green dark:text-brand-aqua">GO</span>
             </span>
           </Link>
 
           {/* Nav links */}
-          <div className="hidden md:flex items-center gap-6 text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
+          <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-brand-dark dark:text-brand-frost">
             <Link to="/browse" className="hover:opacity-70 transition-opacity">Browse</Link>
             {isSignedIn && (
-              <Link to="/dashboard" className="hover:opacity-70 transition-opacity">Dashboard</Link>
+              <>
+                <Link to="/dashboard" className="hover:opacity-70 transition-opacity">Dashboard</Link>
+                <Link to="/my-bookings" className="hover:opacity-70 transition-opacity">My Bookings</Link>
+              </>
             )}
           </div>
 
