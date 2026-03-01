@@ -57,9 +57,11 @@ export default function ItemDetails() {
     const [startDate, setStartDate] = useState(today);
     const [endDate, setEndDate] = useState(tomorrow);
     const [imgError, setImgError] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(0);
 
     useEffect(() => {
         setLoading(true);
+        setSelectedImage(0); // reset selection when item changes
         setError(null);
 
         api.get(`/products/${id}`)
@@ -89,7 +91,8 @@ export default function ItemDetails() {
 
     // Data normalization
     const itemId = item._id || item.id;
-    const imgSrc = (item.images && item.images[0]) || item.image;
+    const productImages = (item.images && item.images.length > 0) ? item.images : (item.image ? [item.image] : []);
+    const imgSrc = productImages[selectedImage] || productImages[0];
     const isAvailable = item.availability ?? item.available ?? true;
     const ownerName = item.owner?.name || 'Local Neighbor';
     const displayLocation = typeof item.location === 'string' ? item.location : (item.location?.address || 'Local Neighborhood');
@@ -212,6 +215,20 @@ export default function ItemDetails() {
                                     )}
                                 </div>
                             </div>
+
+                            {productImages.length > 1 && (
+                                <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-none">
+                                    {productImages.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => { setSelectedImage(idx); setImgError(false); }}
+                                            className={`w-20 h-20 rounded-2xl overflow-hidden shrink-0 transition-all duration-300 ${selectedImage === idx ? 'ring-2 ring-brand-green ring-offset-2 ring-offset-brand-dark scale-105' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                                        >
+                                            <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="flex flex-col gap-4">
                                 <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-brand-dark dark:text-brand-frost leading-none">
