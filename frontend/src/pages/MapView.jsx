@@ -94,21 +94,21 @@ export default function MapPage() {
                     </button>
 
                     <div className="flex-1 flex items-center gap-2">
-                        <Search size={14} className="text-[#73ab84] shrink-0" />
+                        <Search size={14} className="text-[#3C474B] shrink-0" />
                         <input
                             type="text" value={search} onChange={e => setSearch(e.target.value)}
                             placeholder="Search items on map..."
-                            className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost placeholder:text-[#73ab84]/40 outline-none"
+                            className="flex-1 bg-transparent text-sm font-semibold text-brand-dark dark:text-brand-frost placeholder:text-[#3C474B]/40 outline-none"
                         />
                         {search && (
-                            <button onClick={() => setSearch('')} className="text-[#73ab84] hover:text-red-400">
+                            <button onClick={() => setSearch('')} className="text-[#3C474B] hover:text-red-400">
                                 <X size={14} />
                             </button>
                         )}
                     </div>
 
                     <button onClick={() => setShowFilter(f => !f)}
-                        className={`p-2.5 rounded-2xl transition-colors shrink-0 ${showFilter ? 'bg-brand-green/20 text-brand-teal dark:text-brand-green' : 'text-[#73ab84] hover:bg-[#73ab84]/10'}`}>
+                        className={`p-2.5 rounded-2xl transition-colors shrink-0 ${showFilter ? 'bg-brand-green/20 text-brand-teal dark:text-brand-green' : 'text-[#3C474B] hover:bg-[#3C474B]/10'}`}>
                         <SlidersHorizontal size={16} />
                     </button>
 
@@ -121,7 +121,7 @@ export default function MapPage() {
                 {showFilter && (
                     <div className="mt-2 glass-card rounded-2xl p-5 shadow-xl">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-bold text-[#73ab84] uppercase tracking-wider">Search Radius</span>
+                            <span className="text-xs font-bold text-[#3C474B] uppercase tracking-wider">Search Radius</span>
                             <span className="text-sm font-black text-brand-dark dark:text-brand-frost">
                                 {radiusKm >= 6000 ? '🇮🇳 All India' : `${radiusKm.toLocaleString()} km`}
                             </span>
@@ -129,14 +129,14 @@ export default function MapPage() {
                         <input
                             type="range" min="1" max="6000" step="50" value={radiusKm}
                             onChange={e => setRadiusKm(Number(e.target.value))}
-                            className="w-full h-1.5 bg-[#99d19c]/20 rounded-lg appearance-none cursor-pointer accent-brand-green"
+                            className="w-full h-1.5 bg-[#4f7CAC]/20 rounded-lg appearance-none cursor-pointer accent-brand-green"
                         />
-                        <div className="flex justify-between text-[9px] font-bold text-[#73ab84]/50 mt-1 uppercase tracking-widest">
+                        <div className="flex justify-between text-[9px] font-bold text-[#3C474B]/50 mt-1 uppercase tracking-widest">
                             <span>1 km</span><span>All India</span>
                         </div>
                         {locStatus !== 'granted' && (
                             <button onClick={() => setShowModal(true)}
-                                className="mt-3 w-full text-xs font-bold text-brand-teal dark:text-brand-green flex items-center justify-center gap-1.5 py-2 rounded-xl border border-[#99d19c]/30 hover:bg-[#73ab84]/10 transition-colors">
+                                className="mt-3 w-full text-xs font-bold text-brand-teal dark:text-brand-green flex items-center justify-center gap-1.5 py-2 rounded-xl border border-[#4f7CAC]/30 hover:bg-[#3C474B]/10 transition-colors">
                                 <Navigation size={12} /> Enable location for accurate radius
                             </button>
                         )}
@@ -176,7 +176,7 @@ export default function MapPage() {
                         <Circle
                             center={[coords.lat, coords.lng]}
                             radius={radiusKm * 1000}
-                            pathOptions={{ color: '#73ab84', fillColor: '#99d19c', fillOpacity: 0.1, weight: 2, dashArray: '6 4' }}
+                            pathOptions={{ color: '#3C474B', fillColor: '#4f7CAC', fillOpacity: 0.1, weight: 2, dashArray: '6 4' }}
                         />
                     )}
 
@@ -191,7 +191,7 @@ export default function MapPage() {
                             <Popup>
                                 <div style={{ minWidth: '160px' }}>
                                     <strong style={{ fontSize: '13px' }}>{item.title}</strong><br />
-                                    <span style={{ fontSize: '11px', color: '#73ab84' }}>₹{item.pricePerDay}/day</span>
+                                    <span style={{ fontSize: '11px', color: '#3C474B' }}>₹{item.pricePerDay}/day</span>
                                     {item.distanceKm != null && (
                                         <><br /><span style={{ fontSize: '10px', color: '#999' }}>📍 {item.distanceKm} km away</span></>
                                     )}

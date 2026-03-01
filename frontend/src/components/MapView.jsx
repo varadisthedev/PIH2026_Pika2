@@ -50,7 +50,7 @@ export default function MapView({
     return (
         <div
             style={{ height, borderRadius: '1rem', overflow: 'hidden', zIndex: 0 }}
-            className="border border-[#99d19c]/30 dark:border-[#79c7c5]/15 shadow-lg"
+            className="border border-[#4f7CAC]/30 dark:border-[#9EEFE5]/15 shadow-lg"
         >
             <MapContainer
                 center={[lat, lng]}
@@ -77,8 +77,8 @@ export default function MapView({
                         center={[lat, lng]}
                         radius={radiusKm * 1000}
                         pathOptions={{
-                            color: '#73ab84',
-                            fillColor: '#99d19c',
+                            color: '#3C474B',
+                            fillColor: '#4f7CAC',
                             fillOpacity: 0.12,
                             weight: 2,
                             dashArray: '6 4',

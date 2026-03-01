@@ -13,7 +13,7 @@ export default function LocationModal() {
 
                 {/* Dismiss */}
                 <button onClick={dismissModal}
-                    className="absolute top-4 right-4 p-2 rounded-xl text-[#73ab84] hover:bg-[#73ab84]/10 transition-colors">
+                    className="absolute top-4 right-4 p-2 rounded-xl text-[#3C474B] hover:bg-[#3C474B]/10 transition-colors">
                     <X size={18} />
                 </button>
 
@@ -25,7 +25,7 @@ export default function LocationModal() {
                 <h2 className="text-2xl font-black text-brand-dark dark:text-brand-frost mb-2 tracking-tight">
                     Find nearby items
                 </h2>
-                <p className="text-sm text-[#73ab84] dark:text-[#79c7c5] leading-relaxed mb-6">
+                <p className="text-sm text-[#3C474B] dark:text-[#9EEFE5] leading-relaxed mb-6">
                     RentiGO uses your location to show you rental items closest to you — saving you time and travel costs.
                     Your location is never stored on our servers.
                 </p>
@@ -37,9 +37,9 @@ export default function LocationModal() {
                         { icon: MapPin,    text: 'Show item locations on the map' },
                         { icon: Shield,   text: 'Only used locally — never sent to any server' },
                     ].map(({ icon: Icon, text }) => (
-                        <div key={text} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#99d19c]/10 dark:bg-[#79c7c5]/5">
+                        <div key={text} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[#4f7CAC]/10 dark:bg-[#9EEFE5]/5">
                             <Icon size={15} className="text-brand-teal dark:text-brand-green shrink-0" />
-                            <span className="text-xs font-semibold text-[#3d6b50] dark:text-[#79c7c5]">{text}</span>
+                            <span className="text-xs font-semibold text-[#3d6b50] dark:text-[#9EEFE5]">{text}</span>
                         </div>
                     ))}
                 </div>
@@ -54,7 +54,7 @@ export default function LocationModal() {
                 </button>
 
                 <button onClick={dismissModal}
-                    className="w-full py-3 rounded-2xl text-sm font-semibold text-[#73ab84] dark:text-[#79c7c5] hover:bg-[#73ab84]/10 transition-colors">
+                    className="w-full py-3 rounded-2xl text-sm font-semibold text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 transition-colors">
                     Skip for now
                 </button>
             </div>
