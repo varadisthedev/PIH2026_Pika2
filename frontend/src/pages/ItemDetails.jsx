@@ -14,9 +14,26 @@ import Container from '../components/layout/Container.jsx';
 import Card from '../components/ui/Card.jsx';
 import ItemCard from '../components/items/ItemCard.jsx';
 import { useAuth } from '@clerk/clerk-react';
+import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
+import L from 'leaflet';
 import { LoadingGrid, EmptyState, ErrorState } from '../components/items/ItemStates.jsx';
 
 const MapView = lazy(() => import('../components/MapView.jsx'));
+
+// Fix Leaflet paths
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const greenIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+
 
 function DetailSkeleton() {
     return (
@@ -288,34 +305,44 @@ export default function ItemDetails() {
                         {/* Location Preview */}
                         <div className="space-y-6">
                             <h3 className="text-xs font-black uppercase tracking-[0.3em] text-brand-teal/40 px-2">Location Information</h3>
-                            <button
-                                onClick={() => navigate('/map')}
-                                className="w-full relative h-64 rounded-[2rem] overflow-hidden glass-card group cursor-pointer border-brand-teal/5"
-                            >
-                                <div className="absolute inset-0 bg-brand-green/5 dark:bg-brand-teal/5 flex items-center justify-center group-hover:bg-brand-green/10 transition-colors">
-                                    <Suspense fallback={<div className="animate-pulse w-full h-full bg-brand-teal/5" />}>
-                                        <div className="w-full h-full grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-60 transition-all">
-                                            <div className="w-full h-full bg-[url('https://api.mapbox.com/styles/v1/mapbox/light-v10/static/auto/600x400?access_token=pk.placeholder')] bg-cover" />
-                                        </div>
-                                    </Suspense>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="relative">
-                                            <div className="w-16 h-16 bg-brand-green/20 rounded-full animate-ping absolute -inset-0" />
-                                            <div className="w-16 h-16 bg-brand-green/40 rounded-full flex items-center justify-center relative z-10 border-4 border-white dark:border-brand-dark shadow-2xl group-hover:scale-110 transition-transform">
-                                                <MapPin size={24} className="text-brand-dark dark:text-white" />
-                                            </div>
+                            <div className="w-full relative h-64 rounded-[2rem] overflow-hidden glass-card border-brand-teal/5">
+                                {(item.location?.lat && item.location?.lng) ? (
+                                    <MapContainer
+                                        center={[item.location.lat, item.location.lng]}
+                                        zoom={14}
+                                        style={{ height: '100%', width: '100%' }}
+                                        scrollWheelZoom={false}
+                                        zoomControl={false}
+                                        dragging={false}
+                                    >
+                                        <TileLayer
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
+                                        />
+                                        <Circle
+                                            center={[item.location.lat, item.location.lng]}
+                                            radius={800} // Approximate neighborhood
+                                            pathOptions={{ color: '#3C474B', fillColor: '#4f7CAC', fillOpacity: 0.15, weight: 2, dashArray: '6 4' }}
+                                        />
+                                        <Marker position={[item.location.lat, item.location.lng]} icon={greenIcon} />
+                                    </MapContainer>
+                                ) : (
+                                    <div className="absolute inset-0 bg-brand-green/5 dark:bg-brand-teal/5 flex items-center justify-center">
+                                        <div className="text-center font-bold text-brand-teal/40 uppercase tracking-widest text-[10px]">
+                                            <MapPin size={32} className="mx-auto mb-2 opacity-50" />
+                                            Map Location Unavailable
                                         </div>
                                     </div>
-                                </div>
-                                <div className="absolute bottom-6 left-6 right-6 p-4 glass-card shadow-xl flex items-center justify-between group-hover:translate-y-[-4px] transition-transform">
+                                )}
+                                <div className="absolute bottom-6 left-6 right-6 p-4 z-[400] glass-card shadow-xl flex items-center justify-between pointer-events-none">
                                     <div className="text-[10px] font-black text-brand-dark dark:text-brand-frost uppercase tracking-widest">
                                         Approximate location near {displayLocation}
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-brand-green uppercase tracking-widest">
+                                    <button onClick={() => navigate('/map')} className="pointer-events-auto flex items-center gap-2 text-[10px] font-black text-brand-green uppercase tracking-widest hover:text-brand-teal transition-colors">
                                         Expand Map <ExternalLink size={12} />
-                                    </div>
+                                    </button>
                                 </div>
-                            </button>
+                            </div>
                         </div>
                     </div>
 

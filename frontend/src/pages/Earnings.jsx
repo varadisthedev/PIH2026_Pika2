@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import api from '../api/axios.js';
 import {
     IndianRupee, TrendingUp, Calendar, ArrowRight, ArrowLeft,
     Download, Info, ShieldCheck, CheckCircle2, LayoutDashboard,
@@ -14,18 +16,39 @@ import { EmptyState } from '../components/items/ItemStates.jsx';
 
 export default function Earnings() {
     const navigate = useNavigate();
-    const { userRole, incomingRequests } = useRental();
+    const { userRole } = useRental();
+    const { getToken } = useAuth();
+    const [payouts, setPayouts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Summing up accepted requests (Lender view)
-    const processedEarnings = incomingRequests
-        .filter(r => r.status === 'accepted')
-        .reduce((acc, curr) => acc + curr.totalCost, 0);
+    useEffect(() => {
+        if (userRole !== 'lender') {
+            setLoading(false);
+            return;
+        }
 
-    const history = [
-        { id: 1, item: 'DSLR Camera Canon EOS', date: '24 Feb, 2024', amount: 1500, status: 'Completed', renter: 'Rahul S.' },
-        { id: 2, item: 'Camping Tent (4P)', date: '18 Feb, 2024', amount: 800, status: 'Completed', renter: 'Sneha K.' },
-        { id: 3, item: 'Drill Machine', date: '12 Feb, 2024', amount: 450, status: 'Completed', renter: 'Amit B.' },
-    ];
+        const fetchEarnings = async () => {
+            try {
+                const token = await getToken();
+                const res = await api.get('/rentals/seller', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const sellerR = res.data.rentals || [];
+                // Only consider approved or completed rentals for earnings
+                const confirmed = sellerR.filter(r => r.status === 'approved' || r.status === 'completed');
+                setPayouts(confirmed);
+            } catch (err) {
+                console.error("Failed to fetch earnings", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchEarnings();
+    }, [userRole, getToken]);
+
+    // Summing up accepted/completed total rent
+    const processedEarnings = payouts.reduce((acc, curr) => acc + (curr.totalPrice || 0), 0);
 
     if (userRole === 'renter') {
         return (
@@ -81,7 +104,7 @@ export default function Earnings() {
                             </div>
                         </div>
                         <div className="text-[11px] font-black text-brand-dark/60 uppercase tracking-widest mb-1">Available for Payout</div>
-                        <div className="text-5xl font-black text-brand-dark tracking-tighter">₹2,750</div>
+                        <div className="text-5xl font-black text-brand-dark tracking-tighter">₹{processedEarnings.toLocaleString('en-IN')}</div>
                         <Button variant="primary" className="w-full mt-8 !bg-brand-dark !text-white !rounded-2xl">Transfer to Account</Button>
                     </Card>
 
@@ -125,28 +148,51 @@ export default function Earnings() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-4">
-                        {history.map(item => (
-                            <Card key={item.id} variant="default" className="!p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:scale-[1.01] transition-all">
-                                <div className="flex items-center gap-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-brand-teal/5 flex items-center justify-center text-brand-dark dark:text-brand-frost group-hover:bg-brand-green group-hover:text-brand-dark transition-all">
-                                        <CheckCircle2 size={24} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tight leading-none mb-1">{item.item}</h4>
-                                        <div className="flex items-center gap-2 text-[10px] font-black text-brand-teal/40 uppercase tracking-widest">
-                                            <Calendar size={12} /> {item.date} · Renter: {item.renter}
+                        {loading ? (
+                            <div className="p-8 text-center text-sm font-bold text-brand-teal/60">Loading earnings...</div>
+                        ) : payouts.length === 0 ? (
+                            <div className="p-8 text-center text-sm font-bold text-brand-teal/60">No earnings history yet.</div>
+                        ) : (
+                            payouts.map(req => {
+                                const prod = req.product || {};
+                                const r = req.renter || {};
+                                return (
+                                    <Card key={req._id} variant="default" className="!p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:scale-[1.01] transition-all">
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-14 h-14 rounded-2xl bg-brand-teal/5 flex items-center justify-center text-brand-dark dark:text-brand-frost group-hover:bg-brand-green group-hover:text-brand-dark transition-all">
+                                                <CheckCircle2 size={24} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-brand-dark dark:text-brand-frost uppercase tracking-tight leading-none mb-1">{prod.title || 'Unknown Item'}</h4>
+                                                <div className="flex items-center gap-2 text-[10px] font-black text-brand-teal/40 uppercase tracking-widest mt-2">
+                                                    <Calendar size={12} /> {new Date(req.endDate).toLocaleDateString()} · Renter: {r.name || 'User'}
+                                                </div>
+                                                {prod.securityDeposit > 0 && (
+                                                    <div className="text-[10px] font-bold text-brand-teal/60 mt-1 uppercase tracking-widest">
+                                                        Includes ₹{prod.securityDeposit.toLocaleString('en-IN')} Refundable Deposit
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-12 justify-between md:justify-end">
-                                    <div className="text-right">
-                                        <div className="text-[9px] font-black text-brand-teal/40 uppercase tracking-widest mb-0.5">Earned</div>
-                                        <div className="text-xl font-black text-brand-dark dark:text-brand-frost">₹{item.amount}</div>
-                                    </div>
-                                    <Badge variant="approved" className="px-3 py-1 font-black uppercase tracking-widest !text-[9px]">Settled</Badge>
-                                </div>
-                            </Card>
-                        ))}
+                                        <div className="flex items-center gap-12 justify-between md:justify-end">
+                                            <div className="flex gap-8 text-right">
+                                                {prod.securityDeposit > 0 && (
+                                                    <div>
+                                                        <div className="text-[9px] font-black text-brand-teal/40 uppercase tracking-widest mb-0.5">Deposit Held</div>
+                                                        <div className="text-sm font-black text-[#3C474B]">₹{prod.securityDeposit.toLocaleString('en-IN')}</div>
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <div className="text-[9px] font-black text-brand-teal/40 uppercase tracking-widest mb-0.5">Rent Earned</div>
+                                                    <div className="text-xl font-black text-brand-dark dark:text-brand-frost">₹{req.totalPrice?.toLocaleString('en-IN') || 0}</div>
+                                                </div>
+                                            </div>
+                                            <Badge variant="approved" className="px-3 py-1 font-black uppercase tracking-widest !text-[9px]">{req.status}</Badge>
+                                        </div>
+                                    </Card>
+                                );
+                            })
+                        )}
                     </div>
                 </section>
             </Container>
