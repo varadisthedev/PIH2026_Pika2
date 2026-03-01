@@ -29,23 +29,23 @@ function RequestCard({ req, onCancel }) {
     const product = req.product || {};
     return (
         <div className="glass-card rounded-2xl p-4 flex gap-4 items-start card-hover">
-            <div className="w-16 h-16 rounded-xl bg-[#99d19c]/20 dark:bg-[#79c7c5]/10 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-16 h-16 rounded-xl bg-[#4f7CAC]/20 dark:bg-[#9EEFE5]/10 flex items-center justify-center shrink-0 overflow-hidden">
                 {product.images?.[0]
                     ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
-                    : <Package size={24} className="text-[#73ab84] opacity-40" />}
+                    : <Package size={24} className="text-[#3C474B] opacity-40" />}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1">{product.title || 'Unknown'}</h3>
+                    <h3 className="font-bold text-[#162521] dark:text-[#C0E0D2] text-sm line-clamp-1">{product.title || 'Unknown'}</h3>
                     <Badge variant={STATUS_COLOR[req.status] || 'pending'} className="shrink-0 capitalize flex items-center gap-1">
                         {STATUS_ICON[req.status]}{req.status}
                     </Badge>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-[#73ab84] dark:text-[#79c7c5]">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-[#3C474B] dark:text-[#9EEFE5]">
                     <span className="flex items-center gap-1">
                         <Calendar size={11} /> {new Date(req.startDate).toLocaleDateString()} → {new Date(req.endDate).toLocaleDateString()}
                     </span>
-                    <span className="flex items-center gap-1 font-bold text-[#000501] dark:text-[#ade1e5]">
+                    <span className="flex items-center gap-1 font-bold text-[#162521] dark:text-[#C0E0D2]">
                         <IndianRupee size={11} /> {req.totalPrice?.toLocaleString('en-IN')}
                     </span>
                 </div>
@@ -81,10 +81,10 @@ function SellerRequestCard({ req, onStatusUpdate }) {
         <div className="glass-card rounded-2xl p-4 space-y-3">
             {/* Product + status */}
             <div className="flex items-start gap-3">
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#99d19c]/20 shrink-0">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#4f7CAC]/20 shrink-0">
                     {product.images?.[0]
                         ? <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
-                        : <Package size={20} className="text-[#73ab84] opacity-40 m-auto mt-3" />}
+                        : <Package size={20} className="text-[#3C474B] opacity-40 m-auto mt-3" />}
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -93,19 +93,19 @@ function SellerRequestCard({ req, onStatusUpdate }) {
                             {STATUS_ICON[req.status]}{req.status}
                         </Badge>
                     </div>
-                    <p className="text-xs text-[#73ab84] mt-0.5">
+                    <p className="text-xs text-[#3C474B] mt-0.5">
                         ₹{req.totalPrice?.toLocaleString('en-IN')} · {new Date(req.startDate).toLocaleDateString()} – {new Date(req.endDate).toLocaleDateString()}
                     </p>
                 </div>
             </div>
 
             {/* Renter info */}
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#99d19c]/10 dark:bg-[#79c7c5]/5">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#4f7CAC]/10 dark:bg-[#9EEFE5]/5">
                 <User size={14} className="text-brand-teal dark:text-brand-green shrink-0" />
                 <div className="min-w-0">
                     <p className="text-xs font-bold text-brand-dark dark:text-brand-frost">{renter.name || 'Unknown User'}</p>
                     {renter.email && (
-                        <p className="text-[10px] text-[#73ab84] dark:text-[#79c7c5] flex items-center gap-1 truncate">
+                        <p className="text-[10px] text-[#3C474B] dark:text-[#9EEFE5] flex items-center gap-1 truncate">
                             <Mail size={9} /> {renter.email}
                         </p>
                     )}
@@ -127,7 +127,7 @@ function SellerRequestCard({ req, onStatusUpdate }) {
             )}
             {req.status === 'approved' && (
                 <button onClick={() => update('completed')} disabled={updating}
-                    className="w-full py-2 rounded-xl text-xs font-bold border border-[#99d19c]/50 text-brand-teal dark:text-brand-green hover:bg-brand-teal/10 transition-colors disabled:opacity-50">
+                    className="w-full py-2 rounded-xl text-xs font-bold border border-[#4f7CAC]/50 text-brand-teal dark:text-brand-green hover:bg-brand-teal/10 transition-colors disabled:opacity-50">
                     {updating ? '…' : 'Mark as Completed'}
                 </button>
             )}
@@ -271,27 +271,27 @@ export default function Dashboard() {
                     {userRole === 'renter' ? (
                         <>
                             <div className="glass-card rounded-2xl p-5">
-                                <Clock size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
-                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{myRentals.length}</div>
-                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">My Rentals</div>
+                                <Clock size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
+                                <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myRentals.length}</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">My Rentals</div>
                             </div>
                             <div className="glass-card rounded-2xl p-5">
-                                <CheckCircle2 size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
-                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{myRentals.filter(r => r.status === 'approved').length}</div>
-                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">Approved</div>
+                                <CheckCircle2 size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
+                                <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myRentals.filter(r => r.status === 'approved').length}</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Approved</div>
                             </div>
                         </>
                     ) : (
                         <>
                             <div className="glass-card rounded-2xl p-5">
-                                <Store size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
-                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{sellerRentals.filter(r => r.status === 'pending').length}</div>
-                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">Pending Asks</div>
+                                <Store size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
+                                <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{sellerRentals.filter(r => r.status === 'pending').length}</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">Pending Asks</div>
                             </div>
                             <div className="glass-card rounded-2xl p-5">
-                                <Package size={20} className="text-[#73ab84] dark:text-[#79c7c5] mb-3" />
-                                <div className="text-3xl font-black text-[#000501] dark:text-[#ade1e5]">{myListings.length}</div>
-                                <div className="text-xs font-semibold text-[#73ab84] dark:text-[#79c7c5] mt-0.5">All Products</div>
+                                <Package size={20} className="text-[#3C474B] dark:text-[#9EEFE5] mb-3" />
+                                <div className="text-3xl font-black text-[#162521] dark:text-[#C0E0D2]">{myListings.length}</div>
+                                <div className="text-xs font-semibold text-[#3C474B] dark:text-[#9EEFE5] mt-0.5">All Products</div>
                             </div>
                         </>
                     )}
@@ -302,15 +302,15 @@ export default function Dashboard() {
                     {TABS.map(({ id, label, icon: Icon, count }) => (
                         <button key={id} onClick={() => setActiveTab(id)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === id
-                                ? 'bg-[#000501] text-[#ade1e5] dark:bg-[#99d19c] dark:text-[#000501] shadow-sm'
-                                : 'text-[#73ab84] dark:text-[#79c7c5] hover:bg-[#73ab84]/10 dark:hover:bg-[#79c7c5]/10'
+                                ? 'bg-[#162521] text-[#C0E0D2] dark:bg-[#4f7CAC] dark:text-[#162521] shadow-sm'
+                                : 'text-[#3C474B] dark:text-[#9EEFE5] hover:bg-[#3C474B]/10 dark:hover:bg-[#9EEFE5]/10'
                                 }`}>
                             <Icon size={15} />
                             {label}
                             {count > 0 && (
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${activeTab === id
                                     ? 'bg-white/20'
-                                    : 'bg-[#99d19c]/25 text-[#3d6b50] dark:bg-[#79c7c5]/15 dark:text-[#79c7c5]'}`}>
+                                    : 'bg-[#4f7CAC]/25 text-[#3d6b50] dark:bg-[#9EEFE5]/15 dark:text-[#9EEFE5]'}`}>
                                     {count}
                                 </span>
                             )}
@@ -342,7 +342,7 @@ export default function Dashboard() {
                                 action={<Button variant="primary" onClick={() => setShowListModal(true)}><Plus size={15} /> List an Item</Button>} />
                         ) : (
                             <div className="space-y-4">
-                                <p className="text-xs font-bold uppercase tracking-wider text-[#73ab84] dark:text-[#79c7c5]">
+                                <p className="text-xs font-bold uppercase tracking-wider text-[#3C474B] dark:text-[#9EEFE5]">
                                     {sellerRentals.filter(r => r.status === 'pending').length} pending · {sellerRentals.length} total
                                 </p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -367,23 +367,23 @@ export default function Dashboard() {
                                 {myListings.map(item => (
                                     <div key={item._id} className="glass-card rounded-2xl overflow-hidden card-hover relative group">
                                         <Link to={`/item/${item._id}`}>
-                                            <div className="h-36 overflow-hidden bg-[#99d19c]/20 dark:bg-[#79c7c5]/10 flex items-center justify-center">
+                                            <div className="h-36 overflow-hidden bg-[#4f7CAC]/20 dark:bg-[#9EEFE5]/10 flex items-center justify-center">
                                                 {item.images?.[0]
                                                     ? <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
-                                                    : <Package size={40} className="text-[#73ab84] dark:text-[#79c7c5] opacity-40" />}
+                                                    : <Package size={40} className="text-[#3C474B] dark:text-[#9EEFE5] opacity-40" />}
                                             </div>
                                             <div className="p-4">
-                                                <h3 className="font-bold text-[#000501] dark:text-[#ade1e5] text-sm line-clamp-1 mb-1">{item.title}</h3>
+                                                <h3 className="font-bold text-[#162521] dark:text-[#C0E0D2] text-sm line-clamp-1 mb-1">{item.title}</h3>
                                                 {/* Owner info */}
                                                 {item.owner && (
                                                     <div className="flex items-center gap-1.5 mb-2">
-                                                        <div className="w-5 h-5 rounded-full bg-[#99d19c]/30 flex items-center justify-center">
-                                                            <User size={11} className="text-[#73ab84]" />
+                                                        <div className="w-5 h-5 rounded-full bg-[#4f7CAC]/30 flex items-center justify-center">
+                                                            <User size={11} className="text-[#3C474B]" />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-xs font-bold text-[#3d6b50] dark:text-[#79c7c5] truncate">{item.owner.name || 'You'}</p>
+                                                            <p className="text-xs font-bold text-[#3d6b50] dark:text-[#9EEFE5] truncate">{item.owner.name || 'You'}</p>
                                                             {item.owner.email && (
-                                                                <p className="text-[10px] text-[#73ab84]/70 dark:text-[#79c7c5]/50 truncate flex items-center gap-0.5">
+                                                                <p className="text-[10px] text-[#3C474B]/70 dark:text-[#9EEFE5]/50 truncate flex items-center gap-0.5">
                                                                     <Mail size={9} /> {item.owner.email}
                                                                 </p>
                                                             )}
@@ -391,7 +391,7 @@ export default function Dashboard() {
                                                     </div>
                                                 )}
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-medium text-[#73ab84] dark:text-[#79c7c5]">₹{item.pricePerDay?.toLocaleString('en-IN')}/day</span>
+                                                    <span className="text-xs font-medium text-[#3C474B] dark:text-[#9EEFE5]">₹{item.pricePerDay?.toLocaleString('en-IN')}/day</span>
                                                     <Badge variant={item.availability ? 'success' : 'pending'}>
                                                         {item.availability ? 'Active' : 'Unavailable'}
                                                     </Badge>
@@ -406,12 +406,12 @@ export default function Dashboard() {
                                         {/* Edit / Delete overlay */}
                                         <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Link to={`/item/${item._id}`}
-                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#000501]/80 text-[#73ab84] hover:text-brand-teal dark:text-[#79c7c5] dark:hover:text-brand-green shadow-sm backdrop-blur-sm"
+                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#162521]/80 text-[#3C474B] hover:text-brand-teal dark:text-[#9EEFE5] dark:hover:text-brand-green shadow-sm backdrop-blur-sm"
                                                 title="View / Edit">
                                                 <Pencil size={13} />
                                             </Link>
                                             <button onClick={() => handleDeleteListing(item._id)} disabled={deletingId === item._id}
-                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#000501]/80 text-red-400 hover:text-red-600 shadow-sm backdrop-blur-sm disabled:opacity-50"
+                                                className="p-1.5 rounded-lg bg-white/80 dark:bg-[#162521]/80 text-red-400 hover:text-red-600 shadow-sm backdrop-blur-sm disabled:opacity-50"
                                                 title="Delete listing">
                                                 {deletingId === item._id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                                             </button>

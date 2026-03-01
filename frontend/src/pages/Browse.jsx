@@ -232,14 +232,14 @@ export default function Browse() {
                             </div>
                         ) : (
                             <button onClick={() => setShowModal(true)}
-                                className="flex items-center gap-2 text-xs font-bold text-[#73ab84] hover:text-brand-teal dark:text-[#79c7c5] transition-colors">
+                                className="flex items-center gap-2 text-xs font-bold text-[#3C474B] hover:text-brand-teal dark:text-[#9EEFE5] transition-colors">
                                 <Navigation size={13} /> Enable location for nearby results
                             </button>
                         )}
 
                         {/* Mini map preview */}
                         {coords && (
-                            <Suspense fallback={<div className="h-40 rounded-2xl bg-[#99d19c]/10 animate-pulse" />}>
+                            <Suspense fallback={<div className="h-40 rounded-2xl bg-[#4f7CAC]/10 animate-pulse" />}>
                                 <MapView
                                     lat={coords.lat} lng={coords.lng}
                                     title="Your location"

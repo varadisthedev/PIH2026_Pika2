@@ -4,22 +4,22 @@
 /* =============================================
    RENTIGO DESIGN SYSTEM (V4 Refined)
    Color Palette:
-   - #000501  Deep Dark Base (Primary)
-   - #73ab84  Muted Teal (Secondary/Accent)
-   - #99d19c  Celadon Green (Success/Light Accent)
-   - #79c7c5  Pearl Aqua (Info/Action)
-   - #ade1e5  Frosted Blue (Highlight/Lightest)
+   - #162521  Deep Dark Base (Primary)
+   - #3C474B  Muted Teal (Secondary/Accent)
+   - #4f7CAC  Celadon Green (Success/Light Accent)
+   - #9EEFE5  Pearl Aqua (Info/Action)
+   - #C0E0D2  Frosted Blue (Highlight/Lightest)
 ============================================= */
 
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
 
   /* Brand Colors */
-  --color-brand-dark: #000501;
-  --color-brand-teal: #73ab84;
-  --color-brand-green: #99d19c;
-  --color-brand-aqua: #79c7c5;
-  --color-brand-frost: #ade1e5;
+  --color-brand-dark: #162521;
+  --color-brand-teal: #3C474B;
+  --color-brand-green: #4f7CAC;
+  --color-brand-aqua: #9EEFE5;
+  --color-brand-frost: #C0E0D2;
 
   /* Spacing Scale (Standard 4px) */
   --spacing-1: 0.25rem;
@@ -51,12 +51,12 @@ body {
   min-height: 100vh;
   transition: background-color 0.4s ease, color 0.4s ease;
   background-color: #f7fcf9;
-  color: #000501;
+  color: #162521;
 }
 
 html.dark body {
-  background-color: #000501;
-  color: #ade1e5;
+  background-color: #162521;
+  color: #C0E0D2;
 }
 
 /* =============================================
@@ -68,12 +68,12 @@ html.dark body {
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 10px 40px rgba(0, 5, 1, 0.05);
+  box-shadow: 0 10px 40px rgba(22, 37, 33, 0.05);
 }
 
 html.dark .glass {
-  background: rgba(0, 5, 1, 0.4);
-  border: 1px solid rgba(121, 199, 197, 0.15);
+  background: rgba(22, 37, 33, 0.4);
+  border: 1px solid rgba(158, 239, 229, 0.15);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
@@ -82,12 +82,12 @@ html.dark .glass {
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 30px rgba(0, 5, 1, 0.04), 0 1px 2px rgba(0, 5, 1, 0.03);
+  box-shadow: 0 4px 30px rgba(22, 37, 33, 0.04), 0 1px 2px rgba(22, 37, 33, 0.03);
 }
 
 html.dark .glass-card {
   background: rgba(10, 26, 16, 0.7);
-  border: 1px solid rgba(121, 199, 197, 0.12);
+  border: 1px solid rgba(158, 239, 229, 0.12);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -95,14 +95,14 @@ html.dark .glass-card {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid rgba(153, 209, 156, 0.2);
-  box-shadow: 0 1px 15px rgba(0, 5, 1, 0.03);
+  border-bottom: 1px solid rgba(79, 124, 172, 0.2);
+  box-shadow: 0 1px 15px rgba(22, 37, 33, 0.03);
   transition: all 0.3s ease;
 }
 
 html.dark .glass-nav {
-  background: rgba(0, 5, 1, 0.8);
-  border-bottom: 1px solid rgba(121, 199, 197, 0.1);
+  background: rgba(22, 37, 33, 0.8);
+  border-bottom: 1px solid rgba(158, 239, 229, 0.1);
   box-shadow: 0 1px 15px rgba(0, 0, 0, 0.4);
 }
 
@@ -135,12 +135,12 @@ html.dark .glass-nav {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #79c7c5;
+  background: #9EEFE5;
   border-radius: 100px;
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #73ab84;
+  background: #3C474B;
 }
 
 /* =============================================
@@ -194,14 +194,14 @@ html.dark ::-webkit-scrollbar-thumb {
 ============================================= */
 
 .text-gradient {
-  background: linear-gradient(135deg, #000501 0%, #73ab84 50%, #79c7c5 100%);
+  background: linear-gradient(135deg, #162521 0%, #3C474B 50%, #9EEFE5 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 html.dark .text-gradient {
-  background: linear-gradient(135deg, #99d19c 0%, #79c7c5 50%, #ade1e5 100%);
+  background: linear-gradient(135deg, #4f7CAC 0%, #9EEFE5 50%, #C0E0D2 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -217,11 +217,11 @@ html.dark .text-gradient {
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 48px rgba(0, 5, 1, 0.14), 0 4px 12px rgba(0, 5, 1, 0.08);
+  box-shadow: 0 20px 48px rgba(22, 37, 33, 0.14), 0 4px 12px rgba(22, 37, 33, 0.08);
 }
 
 html.dark .card-hover:hover {
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(121, 199, 197, 0.1);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(158, 239, 229, 0.1);
 }
 
 /* =============================================
@@ -234,7 +234,7 @@ html.dark .card-hover:hover {
 }
 
 .focus-ring:focus {
-  box-shadow: 0 0 0 3px rgba(121, 199, 197, 0.5);
+  box-shadow: 0 0 0 3px rgba(158, 239, 229, 0.5);
 }
 
 /* =============================================
@@ -243,16 +243,16 @@ html.dark .card-hover:hover {
 
 .hero-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(121, 199, 197, 0.35) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(153, 209, 156, 0.3) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(158, 239, 229, 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(79, 124, 172, 0.3) 0%, transparent 65%),
     linear-gradient(160deg, #d8f5ee 0%, #c2e8e6 55%, #cdf2d5 100%);
 }
 
 html.dark .hero-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(121, 199, 197, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(153, 209, 156, 0.1) 0%, transparent 65%),
-    linear-gradient(160deg, #000501 0%, #061210 55%, #051208 100%);
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(158, 239, 229, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 80%, rgba(79, 124, 172, 0.1) 0%, transparent 65%),
+    linear-gradient(160deg, #162521 0%, #061210 55%, #051208 100%);
 }
 
 /* =============================================

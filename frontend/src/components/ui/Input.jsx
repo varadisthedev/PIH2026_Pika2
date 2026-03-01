@@ -21,14 +21,14 @@ export default function Input({
             {label && (
                 <label
                     htmlFor={inputId}
-                    className="text-sm font-semibold text-[#000501] dark:text-[#ade1e5] select-none"
+                    className="text-sm font-semibold text-[#162521] dark:text-[#C0E0D2] select-none"
                 >
                     {label}
                 </label>
             )}
             <div className="relative">
                 {Icon && (
-                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#73ab84] dark:text-[#79c7c5] pointer-events-none">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3C474B] dark:text-[#9EEFE5] pointer-events-none">
                         <Icon size={18} />
                     </div>
                 )}
@@ -52,7 +52,7 @@ export default function Input({
                 />
             </div>
             {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
-            {hint && !error && <p className="text-xs text-[#73ab84] dark:text-[#79c7c5]">{hint}</p>}
+            {hint && !error && <p className="text-xs text-[#3C474B] dark:text-[#9EEFE5]">{hint}</p>}
         </div>
     );
 }

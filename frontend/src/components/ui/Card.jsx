@@ -17,9 +17,9 @@ export default function Card({
     const variants = {
         glass: 'glass-card',
         solid:
-            'bg-white dark:bg-[#0a1a10] border border-[#99d19c]/30 dark:border-[#79c7c5]/15 shadow-sm',
+            'bg-white dark:bg-[#0a1a10] border border-[#4f7CAC]/30 dark:border-[#9EEFE5]/15 shadow-sm',
         outline:
-            'border-2 border-[#99d19c]/50 dark:border-[#79c7c5]/25 bg-transparent',
+            'border-2 border-[#4f7CAC]/50 dark:border-[#9EEFE5]/25 bg-transparent',
     };
 
     const hoverClass = hover ? 'card-hover cursor-pointer' : '';

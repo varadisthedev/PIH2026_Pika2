@@ -9,6 +9,7 @@ import { useRental } from '../../context/RentalContext.jsx';
 import { useAuth, useUser, UserButton, SignInButton } from '@clerk/clerk-react';
 import Button from '../ui/Button.jsx';
 import Badge from '../ui/Badge.jsx';
+import ListItemModal from '../ListItemModal.jsx';
 
 const RENTER_LINKS = [
     { label: 'Browse Gear', to: '/browse', icon: Search },
@@ -26,6 +27,7 @@ export default function Navbar() {
     const { isDark, toggleTheme } = useTheme();
     const { userRole, toggleRole, userProfile, notifications } = useRental();
     const [scrolled, setScrolled] = useState(false);
+    const [showListModal, setShowListModal] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const location = useLocation();
@@ -57,6 +59,7 @@ export default function Navbar() {
     const navLinks = userRole === 'renter' ? RENTER_LINKS : LENDER_LINKS;
 
     return (
+        <>
         <header
             className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${scrolled ? 'glass-nav shadow-2xl py-2 scale-[0.98] mt-2 w-[98%] mx-auto rounded-[2rem]' : 'bg-transparent py-4 mx-auto w-full'}`}
         >
@@ -101,19 +104,36 @@ export default function Navbar() {
 
                     {/* Desktop Center Nav */}
                     <nav className="hidden md:flex items-center gap-1">
-                        {navLinks.map(({ label, to, icon: Icon }) => (
-                            <Link
-                                key={to}
-                                to={to}
-                                className={`flex items-center gap-2 justify-center h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive(to)
-                                    ? 'text-brand-green bg-brand-green/5'
-                                    : 'text-brand-teal/60 hover:text-brand-dark dark:text-brand-frost/60 dark:hover:text-brand-frost'
-                                    }`}
-                            >
-                                <Icon size={16} />
-                                {label}
-                            </Link>
-                        ))}
+                        {navLinks.map(({ label, to, icon: Icon }) => {
+                            if (to === '/list-item') {
+                                return (
+                                    <button
+                                        key={to}
+                                        onClick={() => setShowListModal(true)}
+                                        className={`flex items-center gap-2 justify-center h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive(to)
+                                            ? 'text-brand-green bg-brand-green/5'
+                                            : 'text-brand-teal/60 hover:text-brand-dark dark:text-brand-frost/60 dark:hover:text-brand-frost'
+                                            }`}
+                                    >
+                                        <Icon size={16} />
+                                        {label}
+                                    </button>
+                                );
+                            }
+                            return (
+                                <Link
+                                    key={to}
+                                    to={to}
+                                    className={`flex items-center gap-2 justify-center h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive(to)
+                                        ? 'text-brand-green bg-brand-green/5'
+                                        : 'text-brand-teal/60 hover:text-brand-dark dark:text-brand-frost/60 dark:hover:text-brand-frost'
+                                        }`}
+                                >
+                                    <Icon size={16} />
+                                    {label}
+                                </Link>
+                            );
+                        })}
                     </nav>
 
                     {/* Right Actions */}
@@ -233,15 +253,28 @@ export default function Navbar() {
                     </div>
 
                     <nav className="flex flex-col gap-2">
-                        {navLinks.map(({ label, to, icon: Icon }) => (
-                            <Link
-                                key={to}
-                                to={to}
-                                className={`flex items-center gap-4 p-5 rounded-[2rem] text-sm font-black uppercase tracking-widest ${isActive(to) ? 'bg-brand-green/10 text-brand-green' : 'text-brand-teal/60'}`}
-                            >
-                                <Icon size={20} /> {label}
-                            </Link>
-                        ))}
+                        {navLinks.map(({ label, to, icon: Icon }) => {
+                            if (to === '/list-item') {
+                                return (
+                                    <button
+                                        key={to}
+                                        onClick={() => { setShowListModal(true); setMobileOpen(false); }}
+                                        className={`flex items-center w-full gap-4 p-5 rounded-[2rem] text-sm font-black uppercase tracking-widest ${isActive(to) ? 'bg-brand-green/10 text-brand-green' : 'text-brand-teal/60'}`}
+                                    >
+                                        <Icon size={20} /> {label}
+                                    </button>
+                                );
+                            }
+                            return (
+                                <Link
+                                    key={to}
+                                    to={to}
+                                    className={`flex items-center gap-4 p-5 rounded-[2rem] text-sm font-black uppercase tracking-widest ${isActive(to) ? 'bg-brand-green/10 text-brand-green' : 'text-brand-teal/60'}`}
+                                >
+                                    <Icon size={20} /> {label}
+                                </Link>
+                            );
+                        })}
                         <Link
                             to="/wishlist"
                             className="flex items-center gap-4 p-5 rounded-[2rem] text-sm font-black uppercase tracking-widest text-brand-teal/60"
@@ -287,5 +320,14 @@ export default function Navbar() {
                 </div>
             )}
         </header>
+        {showListModal && (
+            <ListItemModal
+                onClose={() => setShowListModal(false)}
+                onSuccess={() => {
+                    navigate('/dashboard');
+                }}
+            />
+        )}
+        </>
     );
 }
