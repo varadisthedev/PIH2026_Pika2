@@ -19,4 +19,4 @@ RentiGO is a premium, seamless peer-to-peer rental marketplace designed to unloc
 - **Geospatial**: Leaflet & OpenStreetMap
 
 ---
-*Built with ❤️ for PIH 2026 Hackathon*
+*Built by the Team **Pika2** — Varad & Sharvari*
