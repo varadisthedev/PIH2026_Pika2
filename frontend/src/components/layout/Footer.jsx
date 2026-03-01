@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Github, Twitter, Instagram, ShieldCheck, Heart, User } from 'lucide-react';
+import { Github, Instagram, ShieldCheck, Heart, User, Mail } from 'lucide-react';
 import Container from './Container.jsx';
 
 const FOOTER_LINKS = {
@@ -32,12 +32,11 @@ export default function Footer() {
                     {/* Brand Column */}
                     <div className="col-span-2 space-y-8">
                         <Link to="/" className="flex items-center gap-2 group">
-                            <div className="w-10 h-10 rounded-2xl bg-brand-dark dark:bg-brand-green flex items-center justify-center group-hover:rotate-12 transition-transform">
-                                <MapPin size={20} className="text-brand-frost dark:text-brand-dark" />
-                            </div>
-                            <span className="text-2xl font-black tracking-tighter text-brand-dark dark:text-brand-frost uppercase">
-                                Renti<span className="text-brand-green">GO</span>
-                            </span>
+                            <img 
+                                src="/trans.png" 
+                                alt="RentiGO Logo" 
+                                className="w-16 h-16 object-contain scale-[2.2] ml-4 group-hover:scale-[2.4] transition-transform duration-300 drop-shadow-2xl" 
+                            />
                         </Link>
 
                         <p className="text-sm font-bold text-brand-teal/60 dark:text-brand-aqua/40 leading-relaxed max-w-sm uppercase tracking-tight">
@@ -45,11 +44,18 @@ export default function Footer() {
                         </p>
 
                         <div className="flex gap-4">
-                            {[Twitter, Instagram, Github].map((Icon, i) => (
-                                <a key={i} href="#" className="w-10 h-10 rounded-2xl glass-card flex items-center justify-center text-brand-teal hover:bg-brand-green hover:text-brand-dark transition-all">
-                                    <Icon size={18} />
-                                </a>
-                            ))}
+                            <a href="https://github.com/varadisthedev/PIH2026_Pika2" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-2xl glass-card flex items-center justify-center text-brand-teal hover:bg-brand-green hover:text-brand-dark transition-all" title="GitHub">
+                                <Github size={18} />
+                            </a>
+                            <a href="https://www.instagram.com/izvarad/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-2xl glass-card flex items-center justify-center text-brand-teal hover:bg-brand-green hover:text-brand-dark transition-all" title="Instagram">
+                                <Instagram size={18} />
+                            </a>
+                            <a href="mailto:24rautv_1@rbunagpur.in" className="w-10 h-10 rounded-2xl glass-card flex items-center justify-center text-brand-teal hover:bg-brand-green hover:text-brand-dark transition-all" title="Email Varad">
+                                <Mail size={18} />
+                            </a>
+                            <a href="mailto:24hiwarkhedkars@rbungapur.in" className="w-10 h-10 rounded-2xl glass-card flex items-center justify-center text-brand-teal hover:bg-brand-green hover:text-brand-dark transition-all" title="Email Shruti">
+                                <Mail size={18} />
+                            </a>
                         </div>
                     </div>
 
